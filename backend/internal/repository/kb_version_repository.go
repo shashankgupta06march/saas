@@ -106,3 +106,4 @@ func (r *KBVersionRepository) DeleteOldVersions(kbID int64, keepLast int) error 
 	_, err := r.db.Exec(query, kbID, kbID, keepLast)
 	return err
 }
+

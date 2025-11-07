@@ -209,3 +209,4 @@ func getQualityRating(score float64) string {
 	}
 	return "Very Poor"
 }
+

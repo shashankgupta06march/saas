@@ -191,3 +191,4 @@ func (h *ChatbotHandler) UpdateSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, settings)
 }
 
+

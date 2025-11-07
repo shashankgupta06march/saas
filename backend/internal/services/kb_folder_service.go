@@ -235,3 +235,4 @@ func (s *KBFolderService) GetRootFolders(chatbotID int64) ([]models.KBFolder, er
 func (s *KBFolderService) GetSubfolders(folderID int64) ([]models.KBFolder, error) {
 	return s.repo.GetChildren(folderID)
 }
+

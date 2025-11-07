@@ -43,3 +43,4 @@ OPENAI_API_KEY="$OPENAI_KEY" \
 ALLOWED_ORIGINS=http://localhost:3000 \
 go run cmd/api/main.go
 
+

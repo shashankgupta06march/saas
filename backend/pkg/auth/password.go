@@ -14,3 +14,4 @@ func CheckPassword(password, hash string) bool {
 	return err == nil
 }
 
+

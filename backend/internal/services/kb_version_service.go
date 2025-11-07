@@ -159,3 +159,4 @@ func (s *KBVersionService) CleanupOldVersions(kbID int64, keepLast int) error {
 func (s *KBVersionService) GetLatestVersion(kbID int64) (int, error) {
 	return s.versionRepo.GetLatestVersion(kbID)
 }
+

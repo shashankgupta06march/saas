@@ -147,3 +147,4 @@ func (r *KBTagRepository) ClearKBTags(kbID int64) error {
 	_, err := r.db.Exec(query, kbID)
 	return err
 }
+

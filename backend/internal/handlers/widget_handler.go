@@ -33,3 +33,4 @@ func (h *WidgetHandler) ServeWidget(c *gin.Context) {
 	c.File(widgetFile)
 }
 
+

@@ -219,3 +219,4 @@ func (h *KBSyncHandler) GetSyncStatus(c *gin.Context) {
 
 	c.JSON(http.StatusOK, status)
 }
+

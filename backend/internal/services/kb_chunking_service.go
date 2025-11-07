@@ -306,3 +306,4 @@ func (s *KBChunkingService) GetRelevantChunks(chatbotID int64, query string, top
 func (s *KBChunkingService) GetChunksForKB(kbID int64) ([]models.KBChunk, error) {
 	return s.chunkRepo.GetByKBID(kbID)
 }
+

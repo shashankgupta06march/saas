@@ -143,3 +143,4 @@ func (r *KBSyncRepository) ToggleActive(id int64, active bool) error {
 	_, err := r.db.Exec(query, active, id)
 	return err
 }
+

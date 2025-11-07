@@ -146,3 +146,4 @@ func (r *KBFolderRepository) GetRootFolders(chatbotID int64) ([]models.KBFolder,
 
 	return folders, nil
 }
+
