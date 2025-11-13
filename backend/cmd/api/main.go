@@ -38,8 +38,8 @@ func main() {
 	tagRepo := repository.NewKBTagRepository(db)
 	versionRepo := repository.NewKBVersionRepository(db)
 	chunkRepo := repository.NewKBChunkRepository(db)
-	syncRepo := repository.NewKBSyncRepository(db)
-	qualityRepo := repository.NewKBQualityRepository(db)
+	// syncRepo := repository.NewKBSyncRepository(db)
+	// qualityRepo := repository.NewKBQualityRepository(db)
 
 	// Initialize services
 	knowledgeService := services.NewKnowledgeService(knowledgeRepo, openaiClient)
@@ -50,8 +50,8 @@ func main() {
 	tagService := services.NewKBTagService(tagRepo)
 	versionService := services.NewKBVersionService(versionRepo, knowledgeRepo)
 	chunkingService := services.NewKBChunkingService(chunkRepo, openaiClient)
-	qualityService := services.NewKBQualityService(qualityRepo, knowledgeService, openaiClient)
-	syncService := services.NewKBSyncService(syncRepo, knowledgeRepo)
+	// qualityService := services.NewKBQualityService(qualityRepo, knowledgeService, openaiClient)
+	// syncService := services.NewKBSyncService(syncRepo, knowledgeRepo)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(userRepo, orgRepo, cfg.JWTSecret)
@@ -65,8 +65,8 @@ func main() {
 	tagHandler := handlers.NewKBTagHandler(tagService)
 	versionHandler := handlers.NewKBVersionHandler(versionService)
 	chunkHandler := handlers.NewKBChunkHandler(chunkingService, knowledgeRepo)
-	qualityHandler := handlers.NewKBQualityHandler(qualityService)
-	syncHandler := handlers.NewKBSyncHandler(syncService)
+	// qualityHandler := handlers.NewKBQualityHandler(qualityService)
+	// syncHandler := handlers.NewKBSyncHandler(syncService)
 
 	// Setup Gin router
 	router := gin.Default()
@@ -161,31 +161,31 @@ func main() {
 			tags.GET("/chatbot/:chatbot_id", tagHandler.GetAllTags)
 		}
 
-		// Quality testing routes
-		quality := protected.Group("/quality")
-		{
-			quality.POST("/test", qualityHandler.RunTest)
-			quality.POST("/batch-test", qualityHandler.RunBatchTests)
-			quality.GET("/tests/:chatbot_id", qualityHandler.GetTestHistory)
-			quality.GET("/stats/:chatbot_id", qualityHandler.GetTestStats)
-			quality.GET("/failed/:chatbot_id", qualityHandler.GetFailedTests)
-			quality.GET("/gaps/:chatbot_id", qualityHandler.IdentifyGaps)
-			quality.GET("/score/:chatbot_id", qualityHandler.GetQualityScore)
-			quality.GET("/suggestions/:chatbot_id", qualityHandler.GetSuggestions)
-		}
+		// Quality testing routes (commented out)
+		// quality := protected.Group("/quality")
+		// {
+		// 	quality.POST("/test", qualityHandler.RunTest)
+		// 	quality.POST("/batch-test", qualityHandler.RunBatchTests)
+		// 	quality.GET("/tests/:chatbot_id", qualityHandler.GetTestHistory)
+		// 	quality.GET("/stats/:chatbot_id", qualityHandler.GetTestStats)
+		// 	quality.GET("/failed/:chatbot_id", qualityHandler.GetFailedTests)
+		// 	quality.GET("/gaps/:chatbot_id", qualityHandler.IdentifyGaps)
+		// 	quality.GET("/score/:chatbot_id", qualityHandler.GetQualityScore)
+		// 	quality.GET("/suggestions/:chatbot_id", qualityHandler.GetSuggestions)
+		// }
 
-		// Sync source routes
-		syncSources := protected.Group("/sync-sources")
-		{
-			syncSources.POST("", syncHandler.CreateSyncSource)
-			syncSources.GET("/:id", syncHandler.GetSyncSource)
-			syncSources.PUT("/:id", syncHandler.UpdateSyncSource)
-			syncSources.DELETE("/:id", syncHandler.DeleteSyncSource)
-			syncSources.GET("/chatbot/:chatbot_id", syncHandler.GetSyncSources)
-			syncSources.POST("/:id/toggle", syncHandler.ToggleSyncSource)
-			syncSources.POST("/:id/trigger", syncHandler.TriggerSync)
-			syncSources.GET("/:id/status", syncHandler.GetSyncStatus)
-		}
+		// Sync source routes (commented out)
+		// syncSources := protected.Group("/sync-sources")
+		// {
+		// 	syncSources.POST("", syncHandler.CreateSyncSource)
+		// 	syncSources.GET("/:id", syncHandler.GetSyncSource)
+		// 	syncSources.PUT("/:id", syncHandler.UpdateSyncSource)
+		// 	syncSources.DELETE("/:id", syncHandler.DeleteSyncSource)
+		// 	syncSources.GET("/chatbot/:chatbot_id", syncHandler.GetSyncSources)
+		// 	syncSources.POST("/:id/toggle", syncHandler.ToggleSyncSource)
+		// 	syncSources.POST("/:id/trigger", syncHandler.TriggerSync)
+		// 	syncSources.GET("/:id/status", syncHandler.GetSyncStatus)
+		// }
 
 		// Analytics routes
 		analytics := protected.Group("/analytics")
