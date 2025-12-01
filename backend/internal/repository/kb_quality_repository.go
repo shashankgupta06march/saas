@@ -160,3 +160,4 @@ func (r *KBQualityRepository) GetFailedTests(chatbotID int64, limit int) ([]mode
 	return tests, nil
 }
 
+

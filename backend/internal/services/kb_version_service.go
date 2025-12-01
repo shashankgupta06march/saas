@@ -160,3 +160,4 @@ func (s *KBVersionService) GetLatestVersion(kbID int64) (int, error) {
 	return s.versionRepo.GetLatestVersion(kbID)
 }
 
+

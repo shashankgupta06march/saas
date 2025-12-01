@@ -2,6 +2,13 @@
 
 A complete SaaS platform for creating and managing AI-powered chatbots with embeddable widgets, knowledge base training, and customizable UI.
 
+## 📚 Quick Links
+
+- **[Quick Start Guide](QUICK_START.md)** - Get running in 15 minutes
+- **[Seeder Usage](SEEDER_USAGE.md)** - Seed demo data instantly
+- **[Demo Credentials](DEMO_CREDENTIALS.md)** - Login credentials & API examples
+- **[Complete Documentation](SEEDER_DOCUMENTATION.md)** - Detailed seeder docs
+
 ## Features
 
 - **Multi-tenant Architecture**: Support multiple organizations with complete data isolation
@@ -61,10 +68,25 @@ chatbot/
 mysql -u admin -p
 ```
 
-2. Run the migration script:
+2. Run the migration scripts:
 ```bash
 mysql -u admin -pAdmin@123 < backend/migrations/001_initial_schema.sql
+mysql -u admin -pAdmin@123 < backend/migrations/002_enhanced_knowledge_base.sql
 ```
+
+3. **(Optional)** Seed demo data for testing:
+```bash
+# Quick method - SQL seeder
+./seed.sh sql
+
+# Or interactive method - Go seeder
+./seed.sh go
+```
+
+This creates 8 organizations, 11 users, 3 chatbots, and sample data.  
+Login with: `admin@test.com` / `password123`
+
+📖 **See**: [SEEDER_USAGE.md](SEEDER_USAGE.md) for details
 
 ### Backend Setup
 
@@ -282,4 +304,5 @@ This project is proprietary software.
 For support, contact your system administrator.
 
 # saas
+
 

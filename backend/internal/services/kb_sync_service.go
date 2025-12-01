@@ -246,3 +246,4 @@ func (s *KBSyncService) GetSyncStatus(syncID int64) (map[string]interface{}, err
 	return status, nil
 }
 
+

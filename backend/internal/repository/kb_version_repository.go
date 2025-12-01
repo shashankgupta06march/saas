@@ -107,3 +107,4 @@ func (r *KBVersionRepository) DeleteOldVersions(kbID int64, keepLast int) error 
 	return err
 }
 
+

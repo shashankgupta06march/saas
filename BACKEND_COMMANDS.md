@@ -94,3 +94,4 @@ http://localhost:8081/api
 **Note:** The `.env` file contains your OpenAI API key and is not committed to Git for security reasons.
 
 
+

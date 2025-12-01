@@ -45,7 +45,26 @@ nano backend/.env
 # Set: OPENAI_API_KEY=sk-your-key-here
 ```
 
-## Step 3: Start Services (2 minutes)
+## Step 3: Seed Demo Data (Optional - 1 minute)
+
+**Option A: Use Demo Accounts (Recommended for Testing)**
+```bash
+cd /var/www/html/chatbot
+./seed.sh go
+```
+
+This creates:
+- 8 Organizations (Free, Premium, Enterprise)
+- 11 Users with various roles
+- 3 Sample Chatbots
+- 4 Knowledge Base Entries
+
+Login with: `admin@test.com` / `password123`
+
+**Option B: Create Your Own Account**
+Skip to Step 4 and register manually.
+
+## Step 4: Start Services (2 minutes)
 
 ### Terminal 1 - Start Backend
 ```bash
@@ -59,8 +78,14 @@ cd /var/www/html/chatbot/frontend
 npm run dev
 ```
 
-## Step 4: Create Account (2 minutes)
+## Step 5: Login/Create Account (2 minutes)
 
+**If you seeded demo data (Step 3):**
+1. Open http://localhost:3000
+2. Login with: `admin@test.com` / `password123`
+3. Skip to Step 6
+
+**If creating new account:**
 1. Open http://localhost:3000
 2. Click "Register"
 3. Fill in:
@@ -69,7 +94,11 @@ npm run dev
    - Password: password123
 4. Click "Register"
 
-## Step 5: Create Chatbot (5 minutes)
+## Step 6: Create Chatbot (5 minutes)
+
+**If you used demo data:** You already have 3 chatbots! Click on "Test Company Support Bot" to see it.
+
+**If creating new chatbot:**
 
 1. Click "Create Chatbot"
 2. Name: "Support Bot"
@@ -94,7 +123,7 @@ npm run dev
 
 11. Copy the widget code
 
-## Step 6: Test Widget (1 minute)
+## Step 7: Test Widget (1 minute)
 
 ```bash
 # Open demo page
@@ -156,5 +185,6 @@ sudo kill -9 <PID>
 - Invite team members
 
 Need help? Check INSTALLATION.md or SETUP_GUIDE.md
+
 
 

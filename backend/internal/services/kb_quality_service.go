@@ -252,3 +252,4 @@ func (s *KBQualityService) SuggestImprovements(chatbotID int64) ([]string, error
 	return suggestions, nil
 }
 
+

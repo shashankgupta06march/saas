@@ -236,3 +236,4 @@ func (s *KBFolderService) GetSubfolders(folderID int64) ([]models.KBFolder, erro
 	return s.repo.GetChildren(folderID)
 }
 
+

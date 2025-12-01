@@ -38,7 +38,7 @@ func main() {
 	tagRepo := repository.NewKBTagRepository(db)
 	versionRepo := repository.NewKBVersionRepository(db)
 	chunkRepo := repository.NewKBChunkRepository(db)
-	// syncRepo := repository.NewKBSyncRepository(db)
+	// syncRepo := repository.NewKBSyncRepository(db)d
 	// qualityRepo := repository.NewKBQualityRepository(db)
 
 	// Initialize services

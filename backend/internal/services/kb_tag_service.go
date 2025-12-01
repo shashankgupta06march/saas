@@ -145,3 +145,4 @@ func (s *KBTagService) BulkAssignTags(kbID int64, tagNames []string, chatbotID i
 	return s.AssignTags(kbID, tagIDs)
 }
 
+

@@ -18,18 +18,17 @@
 
 ## Demo User Accounts
 
-### 1. Organization Administrator (Already Created)
+> **Note**: To seed all demo accounts automatically, run: `./seed.sh go` or `./seed.sh sql`  
+> See [SEEDER_DOCUMENTATION.md](SEEDER_DOCUMENTATION.md) for details.
+
+### 1. Organization Administrator
 **Organization**: Test Company  
 **Email**: `admin@test.com`  
 **Password**: `password123`  
 **Role**: admin  
+**Plan**: Free  
 **Organization ID**: 1  
 **API Key**: `06efecc90c6069f61c803ca415cdb01d5a7fe3c192f10a6bd70031e3bda484e6`
-
-**JWT Token** (expires in 24h):
-```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6ImFkbWluQHRlc3QuY29tIiwib3JnYW5pemF0aW9uX2lkIjoxLCJleHAiOjE3NjA1NDU4NDgsImlhdCI6MTc2MDQ1OTQ0OH0.F0kWvZOxsQLMEUUOQ7DSkgT_nxuhJEFHhwqZNjeA2Vk
-```
 
 **Capabilities**:
 - Create/manage chatbots
@@ -37,6 +36,38 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6ImFkbWluQHRlc3Q
 - Customize widget appearance
 - View analytics
 - Manage organization settings
+
+### 2. Premium Organization Admin
+**Organization**: Demo Corp  
+**Email**: `demo@democorp.com`  
+**Password**: `password123`  
+**Role**: admin  
+**Plan**: Premium  
+
+### 3. Enterprise Organization Admin
+**Organization**: Enterprise Solutions Ltd  
+**Email**: `admin@enterprise.com`  
+**Password**: `password123`  
+**Role**: admin  
+**Plan**: Enterprise  
+
+### 4. Additional Test Users
+**Organization**: Test Company  
+**Email**: `user@test.com`  
+**Password**: `password123`  
+**Role**: user  
+
+**Organization**: Demo Corp  
+**Email**: `manager@democorp.com`  
+**Password**: `password123`  
+**Role**: manager  
+
+**Organization**: Enterprise Solutions Ltd  
+**Email**: `support@enterprise.com`  
+**Password**: `password123`  
+**Role**: support  
+
+> **All Seeded Credentials**: Run the seeder to create 8 organizations with 11 users. All passwords are `password123` for demo purposes.
 
 ---
 
@@ -86,7 +117,27 @@ curl -X POST http://localhost:8081/api/knowledge \
 
 ## Creating Additional Demo Users
 
-### Create Second Organization
+### Option 1: Use Automated Seeder (Recommended)
+
+```bash
+# Seed all demo data at once
+./seed.sh go
+
+# Or use SQL seeder for faster execution
+./seed.sh sql
+```
+
+This creates:
+- 8 Organizations (Free, Premium, Enterprise plans)
+- 11 Users with various roles
+- 3 Sample Chatbots
+- 4 Knowledge Base Entries
+
+See [SEEDER_DOCUMENTATION.md](SEEDER_DOCUMENTATION.md) for complete details.
+
+### Option 2: Manual Registration
+
+#### Create Second Organization
 ```bash
 curl -X POST http://localhost:8081/api/auth/register \
   -H "Content-Type: application/json" \
@@ -97,7 +148,7 @@ curl -X POST http://localhost:8081/api/auth/register \
   }'
 ```
 
-### Create Third Organization
+#### Create Third Organization
 ```bash
 curl -X POST http://localhost:8081/api/auth/register \
   -H "Content-Type: application/json" \
@@ -275,5 +326,6 @@ For issues or questions:
 **Last Updated**: October 14, 2025  
 **System Status**: Backend Running on Port 8081 ✅  
 **Database**: Connected ✅
+
 
 

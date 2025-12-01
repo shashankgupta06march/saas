@@ -220,3 +220,4 @@ func (h *KBFolderHandler) GetFolderPath(c *gin.Context) {
 	c.JSON(http.StatusOK, path)
 }
 
+
