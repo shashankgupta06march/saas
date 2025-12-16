@@ -2,19 +2,35 @@ package parser
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/gocolly/colly/v2"
 )
 
-// ScrapeWebsite extracts text content from a website URL
-func ScrapeWebsite(url string) (string, error) {
+// ScrapeWebsite extracts text content from a website URL with specified depth
+func ScrapeWebsite(websiteURL string, depth int) (string, error) {
+	// Validate depth (0-5 for safety)
+	if depth < 0 {
+		depth = 0
+	}
+	if depth > 5 {
+		depth = 5
+	}
+
+
+	// Parse base URL to get allowed domain
+	parsedURL, err := url.Parse(websiteURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL: %w", err)
+	}
+
 	var content strings.Builder
 	var scrapeErr error
 
 	c := colly.NewCollector(
-		colly.AllowedDomains(),
-		colly.MaxDepth(1),
+		colly.AllowedDomains(parsedURL.Host),
+		colly.MaxDepth(depth),
 	)
 
 	// Remove script and style tags
@@ -46,7 +62,7 @@ func ScrapeWebsite(url string) (string, error) {
 	})
 
 	// Visit the URL
-	err := c.Visit(url)
+	err = c.Visit(websiteURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to visit URL: %w", err)
 	}

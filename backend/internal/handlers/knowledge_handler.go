@@ -208,6 +208,7 @@ type ScrapeURLRequest struct {
 	ChatbotID int64  `json:"chatbot_id" binding:"required"`
 	URL       string `json:"url" binding:"required"`
 	Title     string `json:"title"`
+	Depth     int    `json:"depth"`
 }
 
 func (h *KnowledgeHandler) ScrapeURL(c *gin.Context) {
@@ -225,8 +226,17 @@ func (h *KnowledgeHandler) ScrapeURL(c *gin.Context) {
 
 	organizationID := c.GetInt64("organization_id")
 
+	// Set default depth if not provided
+	depth := req.Depth
+	if depth < 0 {
+		depth = 0
+	}
+	if depth > 5 {
+		depth = 5
+	}
+
 	// Scrape the website
-	content, err := parser.ScrapeWebsite(req.URL)
+	content, err := parser.ScrapeWebsite(req.URL, depth)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scrape website: " + err.Error()})
 		return

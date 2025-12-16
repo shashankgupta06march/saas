@@ -38,6 +38,7 @@ function KnowledgeBase() {
   const [content, setContent] = useState('');
   const [url, setUrl] = useState('');
   const [file, setFile] = useState(null);
+  const [depth, setDepth] = useState(1);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -114,6 +115,7 @@ function KnowledgeBase() {
         chatbot_id: parseInt(chatbotId),
         url,
         title: title || url,
+        depth: parseInt(depth),
       });
       setSuccess('Website scraped and processed successfully');
       closeDialog();
@@ -145,6 +147,7 @@ function KnowledgeBase() {
     setContent('');
     setUrl('');
     setFile(null);
+    setDepth(1);
     setTabValue(0);
   };
 
@@ -330,6 +333,16 @@ function KnowledgeBase() {
                 onChange={(e) => setTitle(e.target.value)}
                 margin="normal"
                 helperText="Leave empty to use URL as title"
+              />
+              <TextField
+                fullWidth
+                label="Scraping Depth"
+                value={depth}
+                onChange={(e) => setDepth(Math.max(0, Math.min(5, parseInt(e.target.value) || 0)))}
+                margin="normal"
+                type="number"
+                inputProps={{ min: 0, max: 5 }}
+                helperText="0 = current page only, 1-5 = follow links to specified depth (max 5)"
               />
             </Box>
           )}
