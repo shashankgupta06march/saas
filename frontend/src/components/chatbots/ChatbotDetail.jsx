@@ -76,10 +76,36 @@ function ChatbotDetail() {
     setTimeout(() => refreshPreview(), 300);
   };
 
+  // Get the widget URL from environment or construct from window location
+  const getWidgetUrl = () => {
+    // Check if there's an environment variable for the widget URL
+    const envUrl = import.meta.env.VITE_WIDGET_URL;
+    if (envUrl) return envUrl;
+    
+    // For production, use the actual domain
+    const currentDomain = window.location.hostname;
+    const protocol = window.location.protocol;
+    
+    if (currentDomain === 'localhost' || currentDomain === '127.0.0.1') {
+      return 'http://localhost:8081/widget.js';
+    }
+    
+    // For live/production environment
+    // If accessing via standard ports (80/443), assume reverse proxy is handling it
+    const port = window.location.port;
+    if (port === '' || port === '80' || port === '443') {
+      // No port needed - assume reverse proxy or direct serving on standard port
+      return `${protocol}//${currentDomain}/widget.js`;
+    }
+    
+    // Otherwise include the port
+    return `${protocol}//${currentDomain}:${port}/widget.js`;
+  };
+
   const widgetCode = `<script>
   (function() {
     var script = document.createElement('script');
-    script.src = 'http://localhost:8081/widget.js';
+    script.src = '${getWidgetUrl()}';
     script.setAttribute('data-chatbot-id', '${id}');
     document.body.appendChild(script);
   })();
@@ -273,7 +299,7 @@ function ChatbotDetail() {
                       <script>
                         (function() {
                           var script = document.createElement('script');
-                          script.src = 'http://localhost:8081/widget.js';
+                          script.src = '${getWidgetUrl()}';
                           script.setAttribute('data-chatbot-id', '${id}');
                           document.body.appendChild(script);
                         })();

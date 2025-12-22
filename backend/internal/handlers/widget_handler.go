@@ -29,6 +29,11 @@ func (h *WidgetHandler) ServeWidget(c *gin.Context) {
 	c.Header("Content-Type", "application/javascript")
 	c.Header("Cache-Control", "public, max-age=3600")
 	
+	// Set CORS headers to allow embedding from any domain
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
+	c.Header("Access-Control-Allow-Headers", "Content-Type")
+	
 	// Serve the file
 	c.File(widgetFile)
 }
