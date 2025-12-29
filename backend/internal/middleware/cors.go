@@ -8,17 +8,13 @@ import (
 func CORSMiddleware(allowedOrigins string) gin.HandlerFunc {
 	config := cors.DefaultConfig()
 
-	// Allow all origins by using a custom function that always returns true
-	// This is necessary because AllowCredentials = true prevents AllowAllOrigins = true
-	config.AllowOriginFunc = func(origin string) bool {
-		// Allow all origins (including null for iframes)
-		return true
-	}
-
+	// Allow all origins - proper way without credentials conflict
+	config.AllowAllOrigins = true
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
-	config.ExposeHeaders = []string{"Content-Length"}
-	config.AllowCredentials = true
+	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"}
+	config.ExposeHeaders = []string{"Content-Length", "Content-Type"}
+	config.AllowCredentials = false // Must be false when allowing all origins
+	config.MaxAge = 12 * 3600 // 12 hours
 
 	return cors.New(config)
 }
