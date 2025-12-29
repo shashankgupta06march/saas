@@ -90,16 +90,8 @@ function ChatbotDetail() {
       return 'http://localhost:8081/widget.js';
     }
     
-    // For live/production environment
-    // If accessing via standard ports (80/443), assume reverse proxy is handling it
-    const port = window.location.port;
-    if (port === '' || port === '80' || port === '443') {
-      // No port needed - assume reverse proxy or direct serving on standard port
-      return `${protocol}//${currentDomain}/widget.js`;
-    }
-    
-    // Otherwise include the port
-    return `${protocol}//${currentDomain}:${port}/widget.js`;
+    // For live/production environment - use chatbot-api subdomain
+    return `${protocol}//chatbot-api.appster.co.in/widget.js`;
   };
 
   const widgetCode = `<script>

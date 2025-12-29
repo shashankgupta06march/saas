@@ -2,15 +2,44 @@
   'use strict';
 
   // Get chatbot ID from script tag
+  // Look for the script tag that loaded this file
+  let chatbotId = null;
+  let apiUrl = null;
+  
   const scripts = document.getElementsByTagName('script');
-  const currentScript = scripts[scripts.length - 1];
-  const chatbotId = currentScript.getAttribute('data-chatbot-id');
-  const apiUrl = currentScript.getAttribute('data-api-url') || 'http://localhost:8081/api';
+  for (let i = 0; i < scripts.length; i++) {
+    const script = scripts[i];
+    if (script.src && script.src.includes('widget.js')) {
+      chatbotId = script.getAttribute('data-chatbot-id');
+      apiUrl = script.getAttribute('data-api-url');
+      break;
+    }
+  }
+  
+  // Fallback: check for inline configuration
+  if (!chatbotId && window.ChatbotConfig) {
+    chatbotId = window.ChatbotConfig.chatbotId;
+    apiUrl = window.ChatbotConfig.apiUrl;
+  }
+  
+  // Set default API URL if not provided
+  if (!apiUrl) {
+    // Auto-detect API URL based on where the widget was loaded from
+    const currentDomain = window.location.hostname;
+    if (currentDomain === 'localhost' || currentDomain === '127.0.0.1') {
+      apiUrl = 'http://localhost:8081/api';
+    } else {
+      // Use the same domain as the current page with https
+      apiUrl = `${window.location.protocol}//chatbot-api.appster.co.in/api`;
+    }
+  }
 
   if (!chatbotId) {
-    console.error('Chatbot ID not provided');
+    console.error('Chatbot ID not provided. Please add data-chatbot-id attribute to the script tag.');
     return;
   }
+  
+  console.log('Chatbot initialized with ID:', chatbotId, 'API URL:', apiUrl);
 
   // Generate unique session ID
   function generateSessionId() {
