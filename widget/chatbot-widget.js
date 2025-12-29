@@ -150,15 +150,16 @@
     chatWindow.id = 'chatbot-chat-window';
     chatWindow.style.cssText = `
       display: none;
+      position: absolute;
+      bottom: 80px;
+      ${settings.position === 'bottom-left' ? 'left' : 'right'}: 0;
       width: ${settings.widget_size === 'small' ? '300px' : settings.widget_size === 'large' ? '400px' : '350px'};
       height: ${settings.widget_size === 'small' ? '400px' : settings.widget_size === 'large' ? '600px' : '500px'};
       background: white;
       border-radius: 10px;
       box-shadow: 0 5px 40px rgba(0,0,0,0.16);
-      display: flex;
       flex-direction: column;
       overflow: hidden;
-      margin-bottom: 10px;
     `;
 
     // Chat header
