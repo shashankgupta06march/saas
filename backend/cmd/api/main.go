@@ -32,6 +32,7 @@ func main() {
 	chatbotRepo := repository.NewChatbotRepository(db)
 	knowledgeRepo := repository.NewKnowledgeRepository(db)
 	conversationRepo := repository.NewConversationRepository(db)
+	leadRepo := repository.NewLeadRepository(db)
 
 	// New advanced KB repositories
 	folderRepo := repository.NewKBFolderRepository(db)
@@ -55,10 +56,11 @@ func main() {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(userRepo, orgRepo, cfg.JWTSecret)
-	chatbotHandler := handlers.NewChatbotHandler(chatbotRepo)
+	chatbotHandler := handlers.NewChatbotHandler(chatbotRepo, leadRepo)
 	knowledgeHandler := handlers.NewKnowledgeHandler(knowledgeService)
 	chatHandler := handlers.NewChatHandler(chatService)
 	widgetHandler := handlers.NewWidgetHandler("../widget")
+	leadHandler := handlers.NewLeadHandler(leadRepo, chatbotRepo, conversationRepo)
 
 	// New advanced KB handlers
 	folderHandler := handlers.NewKBFolderHandler(folderService)
@@ -90,6 +92,9 @@ func main() {
 		// Public chat endpoint (for widget)
 		api.POST("/chat/:chatbot_id", chatHandler.HandleChat)
 		api.GET("/chatbots/:id/settings", chatbotHandler.GetSettings)
+
+		// Public lead submission (widget)
+		api.POST("/leads/:chatbot_id", leadHandler.SubmitLead)
 	}
 
 	// Protected routes (require authentication)
@@ -105,6 +110,10 @@ func main() {
 			chatbots.PUT("/:id", chatbotHandler.Update)
 			chatbots.DELETE("/:id", chatbotHandler.Delete)
 			chatbots.PUT("/:id/settings", chatbotHandler.UpdateSettings)
+			chatbots.GET("/:id/lead-capture", leadHandler.GetConfig)
+			chatbots.PUT("/:id/lead-capture", leadHandler.UpsertConfig)
+			chatbots.GET("/:id/leads", leadHandler.GetLeads)
+			chatbots.GET("/:id/sessions/:session_id/messages", leadHandler.GetSessionMessages)
 		}
 
 		// Knowledge base routes

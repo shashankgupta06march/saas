@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -10,11 +11,12 @@ import (
 )
 
 type ChatbotHandler struct {
-	repo *repository.ChatbotRepository
+	repo     *repository.ChatbotRepository
+	leadRepo *repository.LeadRepository
 }
 
-func NewChatbotHandler(repo *repository.ChatbotRepository) *ChatbotHandler {
-	return &ChatbotHandler{repo: repo}
+func NewChatbotHandler(repo *repository.ChatbotRepository, leadRepo *repository.LeadRepository) *ChatbotHandler {
+	return &ChatbotHandler{repo: repo, leadRepo: leadRepo}
 }
 
 type CreateChatbotRequest struct {
@@ -164,7 +166,35 @@ func (h *ChatbotHandler) GetSettings(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, settings)
+	// Include lead capture config so the widget only needs one settings call.
+	leadCfg, err := h.leadRepo.GetConfig(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get lead capture config"})
+		return
+	}
+
+	var fields []models.LeadCaptureField
+	json.Unmarshal([]byte(leadCfg.Fields), &fields)
+	if fields == nil {
+		fields = []models.LeadCaptureField{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":              settings.ID,
+		"chatbot_id":      settings.ChatbotID,
+		"theme_color":     settings.ThemeColor,
+		"position":        settings.Position,
+		"welcome_message": settings.WelcomeMessage,
+		"avatar_url":      settings.AvatarURL,
+		"custom_css":      settings.CustomCSS,
+		"widget_size":     settings.WidgetSize,
+		"lead_capture": gin.H{
+			"enabled":  leadCfg.Enabled,
+			"title":    leadCfg.Title,
+			"subtitle": leadCfg.Subtitle,
+			"fields":   fields,
+		},
+	})
 }
 
 func (h *ChatbotHandler) UpdateSettings(c *gin.Context) {

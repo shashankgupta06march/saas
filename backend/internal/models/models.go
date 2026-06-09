@@ -178,3 +178,31 @@ type APIUsage struct {
 	Cost           float64   `json:"cost"`
 	Timestamp      time.Time `json:"timestamp"`
 }
+
+// LeadCaptureField represents a single form field definition.
+type LeadCaptureField struct {
+	Name        string `json:"name"`
+	Label       string `json:"label"`
+	Type        string `json:"type"`        // text | email | tel | textarea
+	Required    bool   `json:"required"`
+	Placeholder string `json:"placeholder"`
+}
+
+type LeadCaptureConfig struct {
+	ID        int64     `json:"id"`
+	ChatbotID int64     `json:"chatbot_id"`
+	Enabled   bool      `json:"enabled"`
+	Title     string    `json:"title"`
+	Subtitle  string    `json:"subtitle"`
+	Fields    string    `json:"fields"` // JSON array of LeadCaptureField
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type Lead struct {
+	ID          int64     `json:"id"`
+	ChatbotID   int64     `json:"chatbot_id"`
+	SessionID   string    `json:"session_id"`
+	FieldValues string    `json:"field_values"` // JSON object {"name":"...", "email":"..."}
+	CreatedAt   time.Time `json:"created_at"`
+}

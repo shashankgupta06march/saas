@@ -98,7 +98,9 @@ func (r *ChatbotRepository) Delete(id int64) error {
 
 func (r *ChatbotRepository) GetSettings(chatbotID int64) (*models.ChatbotSettings, error) {
 	settings := &models.ChatbotSettings{}
-	query := `SELECT id, chatbot_id, theme_color, position, welcome_message, avatar_url, custom_css, widget_size FROM chatbot_settings WHERE chatbot_id = ?`
+	query := `SELECT id, chatbot_id, theme_color, position, welcome_message,
+	          COALESCE(avatar_url, ''), COALESCE(custom_css, ''), widget_size
+	          FROM chatbot_settings WHERE chatbot_id = ?`
 	err := r.db.QueryRow(query, chatbotID).Scan(
 		&settings.ID,
 		&settings.ChatbotID,
