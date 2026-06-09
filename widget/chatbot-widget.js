@@ -443,15 +443,15 @@
 
     const bubble = document.createElement('div');
     bubble.style.cssText = `
-      max-width: 70%;
-      padding: 10px 15px;
+      max-width: ${role === 'user' ? '70%' : '85%'};
+      padding: 10px 14px;
       border-radius: 18px;
       ${role === 'user'
         ? `background-color: ${settings.theme_color}; color: white; font-weight: 500;`
         : 'background-color: #ffffff; color: #333; border: 1px solid #e0e0e0;'}
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.6;
       word-wrap: break-word;
     `;
 
@@ -467,16 +467,62 @@
   }
 
   function formatMessageContent(content) {
-    const escapeHtml = (text) => {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+    const esc = (t) => t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    const inline = (t) => {
+      // bold
+      t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      // inline code
+      t = t.replace(/`([^`]+)`/g, '<code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:12px;font-family:monospace;">$1</code>');
+      // links
+      t = t.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#1976d2;text-decoration:underline;word-break:break-all;">$1</a>');
+      return t;
     };
-    let formatted = escapeHtml(content).replace(/\n/g, '<br>');
-    formatted = formatted.replace(/(https?:\/\/[^\s]+)/g, (url) =>
-      `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#1976d2;text-decoration:underline;word-break:break-all;">${url}</a>`
-    );
-    return formatted;
+
+    const lines = content.split('\n');
+    let html = '';
+    let inUL = false;
+    let inOL = false;
+
+    const closeUL = () => { if (inUL) { html += '</ul>'; inUL = false; } };
+    const closeOL = () => { if (inOL) { html += '</ol>'; inOL = false; } };
+    const closeLists = () => { closeUL(); closeOL(); };
+
+    lines.forEach(line => {
+      const h3 = line.match(/^###\s+(.+)/);
+      const h2 = line.match(/^##\s+(.+)/);
+      const h1 = line.match(/^#\s+(.+)/);
+      const ul = line.match(/^[-*]\s+(.+)/);
+      const ol = line.match(/^\d+[.)]\s+(.+)/);
+
+      if (h3) {
+        closeLists();
+        html += `<h3 style="font-size:13px;font-weight:700;margin:8px 0 3px;color:#1a1a1a;border-bottom:1px solid #eee;padding-bottom:2px;">${inline(esc(h3[1]))}</h3>`;
+      } else if (h2) {
+        closeLists();
+        html += `<h2 style="font-size:14px;font-weight:700;margin:10px 0 4px;color:#1a1a1a;border-bottom:1px solid #eee;padding-bottom:2px;">${inline(esc(h2[1]))}</h2>`;
+      } else if (h1) {
+        closeLists();
+        html += `<h1 style="font-size:15px;font-weight:700;margin:10px 0 5px;color:#1a1a1a;">${inline(esc(h1[1]))}</h1>`;
+      } else if (ul) {
+        closeOL();
+        if (!inUL) { html += '<ul style="margin:4px 0;padding-left:20px;list-style-type:disc;">'; inUL = true; }
+        html += `<li style="margin-bottom:4px;">${inline(esc(ul[1]))}</li>`;
+      } else if (ol) {
+        closeUL();
+        if (!inOL) { html += '<ol style="margin:4px 0;padding-left:20px;">'; inOL = true; }
+        html += `<li style="margin-bottom:4px;">${inline(esc(ol[1]))}</li>`;
+      } else if (line.trim() === '') {
+        closeLists();
+        html += '<div style="height:5px;"></div>';
+      } else {
+        closeLists();
+        html += `<p style="margin:0 0 4px;">${inline(esc(line))}</p>`;
+      }
+    });
+
+    closeLists();
+    return html;
   }
 
   function addTypingIndicator() {
