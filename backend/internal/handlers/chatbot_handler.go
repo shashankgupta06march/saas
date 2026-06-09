@@ -166,6 +166,13 @@ func (h *ChatbotHandler) GetSettings(c *gin.Context) {
 		return
 	}
 
+	// Fetch chatbot name for the widget footer disclaimer.
+	chatbot, err := h.repo.GetByID(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Chatbot not found"})
+		return
+	}
+
 	// Include lead capture config so the widget only needs one settings call.
 	leadCfg, err := h.leadRepo.GetConfig(id)
 	if err != nil {
@@ -182,6 +189,7 @@ func (h *ChatbotHandler) GetSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"id":              settings.ID,
 		"chatbot_id":      settings.ChatbotID,
+		"chatbot_name":    chatbot.Name,
 		"theme_color":     settings.ThemeColor,
 		"position":        settings.Position,
 		"welcome_message": settings.WelcomeMessage,
