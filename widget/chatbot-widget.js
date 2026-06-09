@@ -144,21 +144,23 @@
 
     const button = document.createElement('button');
     button.id = 'chatbot-toggle-button';
-    button.innerHTML = '💬';
+    button.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="white"/></svg>`;
     button.style.cssText = `
-      width: 60px;
-      height: 60px;
+      width: 58px;
+      height: 58px;
       border-radius: 50%;
-      background-color: ${settings.theme_color};
+      background: linear-gradient(135deg, ${settings.theme_color} 0%, ${settings.theme_color}cc 100%);
       color: white;
       border: none;
-      font-size: 24px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transition: transform 0.2s;
+      box-shadow: 0 6px 20px ${settings.theme_color}66;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     `;
-    button.onmouseover = () => { button.style.transform = 'scale(1.1)'; };
-    button.onmouseout  = () => { button.style.transform = 'scale(1)'; };
+    button.onmouseover = () => { button.style.transform = 'scale(1.1)'; button.style.boxShadow = `0 8px 28px ${settings.theme_color}88`; };
+    button.onmouseout  = () => { button.style.transform = 'scale(1)';   button.style.boxShadow = `0 6px 20px ${settings.theme_color}66`; };
     button.onclick = toggleChat;
 
     const chatWindow = document.createElement('div');
@@ -173,27 +175,35 @@
       width: ${w};
       height: ${h};
       background: white;
-      border-radius: 10px;
-      box-shadow: 0 5px 40px rgba(0,0,0,0.16);
+      border-radius: 16px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.18);
       flex-direction: column;
       overflow: hidden;
     `;
 
-    // Header
+    // ── Modern Header ────────────────────────────────────────────────────────
     const header = document.createElement('div');
     header.style.cssText = `
-      background-color: ${settings.theme_color};
+      background: linear-gradient(135deg, ${settings.theme_color} 0%, ${settings.theme_color}cc 100%);
       color: white;
-      padding: 15px;
-      font-weight: bold;
+      padding: 13px 16px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 11px;
       flex-shrink: 0;
     `;
+    const botName = settings.chatbot_name || 'Assistant';
     header.innerHTML = `
-      <span>Chat with us</span>
-      <button id="chatbot-close-button" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;">×</button>
+      <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2L13.09 9.26L20 12L13.09 14.74L12 22L10.91 14.74L4 12L10.91 9.26L12 2Z" fill="white"/><path d="M19 5L19.54 8.46L23 9L19.54 9.54L19 13L18.46 9.54L15 9L18.46 8.46L19 5Z" fill="rgba(255,255,255,0.7)"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:14px;letter-spacing:0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${botName}</div>
+        <div style="font-size:11px;opacity:0.85;display:flex;align-items:center;gap:4px;margin-top:1px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#4ade80;display:inline-block;box-shadow:0 0 4px #4ade80;"></span>Online
+        </div>
+      </div>
+      <button id="chatbot-close-button" style="background:rgba(255,255,255,0.18);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;flex-shrink:0;">&times;</button>
     `;
 
     chatWindow.appendChild(header);
@@ -428,53 +438,71 @@
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding: 15px;
-      background-color: #f5f5f5;
+      padding: 16px 14px;
+      background: #f0f4ff;
+      scroll-behavior: smooth;
     `;
 
+    // ── Modern input area ──
     const inputContainer = document.createElement('div');
     inputContainer.style.cssText = `
       display: flex;
       flex-direction: column;
-      padding: 10px 15px 8px;
+      padding: 10px 14px 8px;
       background: white;
-      border-top: 1px solid #e0e0e0;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
       flex-shrink: 0;
     `;
 
-    // Input row
     const inputRow = document.createElement('div');
-    inputRow.style.cssText = 'display:flex;align-items:center;gap:0;';
+    inputRow.style.cssText = 'display:flex;align-items:center;gap:10px;';
 
     const input = document.createElement('input');
     input.id = 'chatbot-input';
     input.type = 'text';
-    input.placeholder = 'Type your message...';
+    input.placeholder = 'Ask me anything...';
     input.style.cssText = `
       flex: 1;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 20px;
+      padding: 11px 16px;
+      border: 1.5px solid #e8eaf0;
+      border-radius: 24px;
       outline: none;
       font-size: 14px;
+      background: #f7f8fc;
+      color: #1a1a2e;
+      font-family: inherit;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
     `;
+    input.onfocus = () => {
+      input.style.borderColor = settings.theme_color;
+      input.style.background = '#fff';
+      input.style.boxShadow = `0 0 0 3px ${settings.theme_color}22`;
+    };
+    input.onblur = () => {
+      input.style.borderColor = '#e8eaf0';
+      input.style.background = '#f7f8fc';
+      input.style.boxShadow = 'none';
+    };
 
     const sendButton = document.createElement('button');
     sendButton.id = 'chatbot-send-button';
-    sendButton.innerHTML = '➤';
+    sendButton.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     sendButton.style.cssText = `
-      background-color: ${settings.theme_color};
-      color: white;
+      background: linear-gradient(135deg, ${settings.theme_color}, ${settings.theme_color}cc);
       border: none;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      margin-left: 10px;
+      width: 42px;
+      height: 42px;
       cursor: pointer;
-      font-size: 18px;
-      transition: opacity 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
+      box-shadow: 0 3px 10px ${settings.theme_color}55;
+      transition: transform 0.15s, box-shadow 0.15s;
     `;
+    sendButton.onmouseover = () => { sendButton.style.transform = 'scale(1.08)'; sendButton.style.boxShadow = `0 5px 16px ${settings.theme_color}77`; };
+    sendButton.onmouseout  = () => { sendButton.style.transform = 'scale(1)';    sendButton.style.boxShadow = `0 3px 10px ${settings.theme_color}55`; };
     sendButton.onclick = handleSendMessage;
     input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') handleSendMessage();
@@ -483,11 +511,11 @@
     inputRow.appendChild(input);
     inputRow.appendChild(sendButton);
 
-    // Disclaimer footer inside the input container
+    // Disclaimer
     const disclaimer = document.createElement('div');
-    disclaimer.style.cssText = 'text-align:center;padding-top:6px;font-size:11px;color:#aaa;';
-    const botName = settings.chatbot_name || 'AI';
-    disclaimer.innerHTML = `<a href="#" onclick="return false;" style="color:${settings.theme_color};text-decoration:none;font-weight:500;">${botName}</a> can make mistakes. Verify important info.`;
+    disclaimer.style.cssText = 'text-align:center;padding-top:5px;font-size:11px;color:#b0b4c0;';
+    const dBotName = settings.chatbot_name || 'AI';
+    disclaimer.innerHTML = `<a href="#" onclick="return false;" style="color:${settings.theme_color};text-decoration:none;font-weight:600;">${dBotName}</a> can make mistakes. Verify important info.`;
 
     inputContainer.appendChild(inputRow);
     inputContainer.appendChild(disclaimer);
@@ -495,7 +523,6 @@
     wrapper.appendChild(messagesContainer);
     wrapper.appendChild(inputContainer);
 
-    // Show welcome message after DOM is inserted (next tick)
     setTimeout(() => addMessage('assistant', settings.welcome_message), 0);
 
     return wrapper;
@@ -525,40 +552,69 @@
 
     const messageDiv = document.createElement('div');
     messageDiv.style.cssText = `
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       display: flex;
       align-items: flex-end;
       gap: 8px;
       ${role === 'user' ? 'justify-content: flex-end;' : 'justify-content: flex-start;'}
     `;
 
-    if (role === 'assistant' && settings.avatar_url) {
-      const avatar = document.createElement('img');
-      avatar.src = settings.avatar_url;
-      avatar.style.cssText = 'width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;';
-      avatar.onerror = function() { this.style.display = 'none'; };
-      messageDiv.appendChild(avatar);
+    if (role === 'assistant') {
+      // Bot avatar dot
+      const avatarEl = document.createElement('div');
+      if (settings.avatar_url) {
+        const img = document.createElement('img');
+        img.src = settings.avatar_url;
+        img.style.cssText = 'width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;';
+        img.onerror = () => {
+          img.style.display = 'none';
+          avatarEl.style.cssText += 'display:flex;';
+        };
+        avatarEl.appendChild(img);
+        avatarEl.style.cssText = 'flex-shrink:0;';
+      } else {
+        avatarEl.style.cssText = `
+          width:30px;height:30px;border-radius:50%;flex-shrink:0;
+          background:linear-gradient(135deg,${settings.theme_color},${settings.theme_color}bb);
+          display:flex;align-items:center;justify-content:center;
+          box-shadow:0 2px 6px ${settings.theme_color}44;
+        `;
+        avatarEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L13.09 9.26L20 12L13.09 14.74L12 22L10.91 14.74L4 12L10.91 9.26L12 2Z" fill="white"/></svg>`;
+      }
+      messageDiv.appendChild(avatarEl);
     }
 
     const bubble = document.createElement('div');
-    bubble.style.cssText = `
-      max-width: ${role === 'user' ? '70%' : '85%'};
-      padding: 10px 14px;
-      border-radius: 18px;
-      ${role === 'user'
-        ? `background-color: ${settings.theme_color}; color: white; font-weight: 500;`
-        : 'background-color: #ffffff; color: #333; border: 1px solid #e0e0e0;'}
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      font-size: 14px;
-      line-height: 1.6;
-      word-wrap: break-word;
-    `;
 
-    if (role === 'assistant') {
+    if (role === 'user') {
+      bubble.style.cssText = `
+        max-width: 72%;
+        padding: 10px 15px;
+        border-radius: 20px 20px 4px 20px;
+        background: linear-gradient(135deg, ${settings.theme_color} 0%, ${settings.theme_color}dd 100%);
+        color: white;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.55;
+        word-wrap: break-word;
+        box-shadow: 0 3px 10px ${settings.theme_color}44;
+      `;
+      bubble.textContent = content;
+    } else {
+      bubble.style.cssText = `
+        max-width: 80%;
+        padding: 11px 14px;
+        border-radius: 4px 20px 20px 20px;
+        background: white;
+        color: #1a1a2e;
+        font-size: 14px;
+        line-height: 1.6;
+        word-wrap: break-word;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid #eef0f8;
+      `;
       bubble.classList.add('chatbot-response-bubble');
       bubble.innerHTML = formatMessageContent(content);
-    } else {
-      bubble.textContent = content;
     }
 
     messageDiv.appendChild(bubble);
@@ -628,34 +684,46 @@
   function addTypingIndicator() {
     const messagesContainer = document.getElementById('chatbot-messages');
     if (!messagesContainer) return;
+
     const typingDiv = document.createElement('div');
     typingDiv.id = 'chatbot-typing';
-    typingDiv.style.cssText = 'margin-bottom:12px;display:flex;align-items:flex-end;gap:8px;justify-content:flex-start;';
+    typingDiv.style.cssText = 'margin-bottom:14px;display:flex;align-items:flex-end;gap:8px;justify-content:flex-start;';
 
+    // Same avatar as messages
+    const avatarEl = document.createElement('div');
     if (settings.avatar_url) {
-      const avatar = document.createElement('img');
-      avatar.src = settings.avatar_url;
-      avatar.style.cssText = 'width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;';
-      avatar.onerror = function() { this.style.display = 'none'; };
-      typingDiv.appendChild(avatar);
+      const img = document.createElement('img');
+      img.src = settings.avatar_url;
+      img.style.cssText = 'width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;';
+      img.onerror = () => { img.style.display = 'none'; };
+      avatarEl.appendChild(img);
+      avatarEl.style.cssText = 'flex-shrink:0;';
+    } else {
+      avatarEl.style.cssText = `
+        width:30px;height:30px;border-radius:50%;flex-shrink:0;
+        background:linear-gradient(135deg,${settings.theme_color},${settings.theme_color}bb);
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 2px 6px ${settings.theme_color}44;
+      `;
+      avatarEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L13.09 9.26L20 12L13.09 14.74L12 22L10.91 14.74L4 12L10.91 9.26L12 2Z" fill="white"/></svg>`;
     }
+    typingDiv.appendChild(avatarEl);
 
     const bubble = document.createElement('div');
     bubble.style.cssText = `
-      background-color: #ffffff;
-      padding: 10px 15px;
-      border-radius: 18px;
-      border: 1px solid #e0e0e0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: white;
+      padding: 13px 16px;
+      border-radius: 4px 20px 20px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border: 1px solid #eef0f8;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
     `;
     bubble.innerHTML = `
-      <span style="color:#666;font-size:14px;margin-right:4px;">Typing</span>
-      <span style="animation:blink 1.4s infinite;color:${settings.theme_color};font-size:20px;line-height:1;">●</span>
-      <span style="animation:blink 1.4s infinite 0.2s;color:${settings.theme_color};font-size:20px;line-height:1;">●</span>
-      <span style="animation:blink 1.4s infinite 0.4s;color:${settings.theme_color};font-size:20px;line-height:1;">●</span>
+      <span style="width:8px;height:8px;border-radius:50%;background:${settings.theme_color};display:inline-block;animation:cb-bounce 1.2s infinite 0s;opacity:0.8;"></span>
+      <span style="width:8px;height:8px;border-radius:50%;background:${settings.theme_color};display:inline-block;animation:cb-bounce 1.2s infinite 0.2s;opacity:0.8;"></span>
+      <span style="width:8px;height:8px;border-radius:50%;background:${settings.theme_color};display:inline-block;animation:cb-bounce 1.2s infinite 0.4s;opacity:0.8;"></span>
     `;
     typingDiv.appendChild(bubble);
     messagesContainer.appendChild(typingDiv);
@@ -701,6 +769,14 @@
       0%, 50%, 100% { opacity: 0.3; }
       25% { opacity: 1; }
     }
+    @keyframes cb-bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-7px); }
+    }
+    #chatbot-messages::-webkit-scrollbar { width: 4px; }
+    #chatbot-messages::-webkit-scrollbar-track { background: transparent; }
+    #chatbot-messages::-webkit-scrollbar-thumb { background: #d0d4e8; border-radius: 4px; }
+    #chatbot-close-button:hover { background: rgba(255,255,255,0.3) !important; }
   `;
   document.head.appendChild(style);
 
