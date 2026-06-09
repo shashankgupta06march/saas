@@ -240,7 +240,7 @@
     // ── Premium dark header ──────────────────────────────────────────────────
     const hdr = document.createElement('div');
     hdr.style.cssText = `
-      background: linear-gradient(150deg, #1a2b52 0%, #243368 55%, #2d3f80 100%);
+      background: linear-gradient(150deg, ${settings.theme_color} 0%, ${settings.theme_color}cc 55%, ${settings.theme_color}aa 100%);
       padding: 18px 18px 22px;
       position: relative;
       flex-shrink: 0;
@@ -360,11 +360,11 @@
     submitBtn.textContent = 'Start Chat';
     submitBtn.style.cssText = `
       width:100%;padding:13px;
-      background:linear-gradient(135deg,#1a2b52 0%,#2d3f80 100%);
+      background:linear-gradient(135deg,${settings.theme_color} 0%,${settings.theme_color}cc 100%);
       color:white;border:none;border-radius:10px;
       font-size:15px;font-weight:600;cursor:pointer;
       letter-spacing:0.3px;transition:opacity 0.2s;
-      box-shadow:0 4px 14px rgba(26,43,82,0.35);
+      box-shadow:0 4px 14px ${settings.theme_color}55;
     `;
     submitBtn.onmouseover = () => { submitBtn.style.opacity = '0.88'; };
     submitBtn.onmouseout  = () => { submitBtn.style.opacity = '1'; };
