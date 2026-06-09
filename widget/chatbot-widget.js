@@ -762,6 +762,26 @@
     input.focus();
   }
 
+  // ── Load Google Sans from Google Fonts (only once) ─────────────────────────
+  if (!document.getElementById('chatbot-google-sans-font')) {
+    const preconnect1 = document.createElement('link');
+    preconnect1.rel = 'preconnect';
+    preconnect1.href = 'https://fonts.googleapis.com';
+    document.head.appendChild(preconnect1);
+
+    const preconnect2 = document.createElement('link');
+    preconnect2.rel = 'preconnect';
+    preconnect2.href = 'https://fonts.gstatic.com';
+    preconnect2.crossOrigin = 'anonymous';
+    document.head.appendChild(preconnect2);
+
+    const fontLink = document.createElement('link');
+    fontLink.id = 'chatbot-google-sans-font';
+    fontLink.rel = 'stylesheet';
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap';
+    document.head.appendChild(fontLink);
+  }
+
   // Styles (theme-specific keyframes are appended in createWidget once settings load)
   const style = document.createElement('style');
   style.textContent = `
@@ -772,6 +792,14 @@
     @keyframes cb-bounce {
       0%, 60%, 100% { transform: translateY(0); }
       30% { transform: translateY(-7px); }
+    }
+    #chatbot-widget-container,
+    #chatbot-widget-container * {
+      font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-optical-sizing: auto;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      box-sizing: border-box;
     }
     #chatbot-messages::-webkit-scrollbar { width: 4px; }
     #chatbot-messages::-webkit-scrollbar-track { background: transparent; }
