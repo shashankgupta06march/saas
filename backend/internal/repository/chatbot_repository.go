@@ -99,7 +99,8 @@ func (r *ChatbotRepository) Delete(id int64) error {
 func (r *ChatbotRepository) GetSettings(chatbotID int64) (*models.ChatbotSettings, error) {
 	settings := &models.ChatbotSettings{}
 	query := `SELECT id, chatbot_id, theme_color, position, welcome_message,
-	          COALESCE(avatar_url, ''), COALESCE(custom_css, ''), widget_size
+	          COALESCE(avatar_url, ''), COALESCE(custom_css, ''), widget_size,
+	          COALESCE(suggestions, '[]')
 	          FROM chatbot_settings WHERE chatbot_id = ?`
 	err := r.db.QueryRow(query, chatbotID).Scan(
 		&settings.ID,
@@ -110,6 +111,7 @@ func (r *ChatbotRepository) GetSettings(chatbotID int64) (*models.ChatbotSetting
 		&settings.AvatarURL,
 		&settings.CustomCSS,
 		&settings.WidgetSize,
+		&settings.Suggestions,
 	)
 
 	if err == sql.ErrNoRows {
@@ -120,8 +122,14 @@ func (r *ChatbotRepository) GetSettings(chatbotID int64) (*models.ChatbotSetting
 }
 
 func (r *ChatbotRepository) UpdateSettings(settings *models.ChatbotSettings) error {
-	query := `UPDATE chatbot_settings SET theme_color = ?, position = ?, welcome_message = ?, avatar_url = ?, custom_css = ?, widget_size = ? WHERE chatbot_id = ?`
-	_, err := r.db.Exec(query, settings.ThemeColor, settings.Position, settings.WelcomeMessage, settings.AvatarURL, settings.CustomCSS, settings.WidgetSize, settings.ChatbotID)
+	query := `UPDATE chatbot_settings SET theme_color = ?, position = ?, welcome_message = ?,
+	          avatar_url = ?, custom_css = ?, widget_size = ?, suggestions = ?
+	          WHERE chatbot_id = ?`
+	_, err := r.db.Exec(query,
+		settings.ThemeColor, settings.Position, settings.WelcomeMessage,
+		settings.AvatarURL, settings.CustomCSS, settings.WidgetSize,
+		settings.Suggestions, settings.ChatbotID,
+	)
 	return err
 }
 

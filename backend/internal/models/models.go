@@ -34,6 +34,7 @@ type ChatbotSettings struct {
 	AvatarURL      string `json:"avatar_url"`
 	CustomCSS      string `json:"custom_css"`
 	WidgetSize     string `json:"widget_size"`
+	Suggestions    string `json:"suggestions"` // JSON array of suggestion strings
 }
 
 type KnowledgeBase struct {

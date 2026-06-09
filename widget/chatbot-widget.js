@@ -521,6 +521,55 @@
     inputContainer.appendChild(disclaimer);
 
     wrapper.appendChild(messagesContainer);
+
+    // ── Persistent suggestion chips bar ────────────────────────────────────
+    const suggestions = settings.suggestions || [];
+    if (suggestions.length > 0) {
+      const sugBar = document.createElement('div');
+      sugBar.id = 'chatbot-suggestions';
+      sugBar.style.cssText = `
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        padding: 8px 14px;
+        background: white;
+        border-top: 1px solid #eef0f8;
+        overflow-x: auto;
+        flex-shrink: 0;
+        scrollbar-width: none;
+      `;
+      // Hide webkit scrollbar
+      sugBar.innerHTML = '<style>#chatbot-suggestions::-webkit-scrollbar{display:none;}</style>';
+
+      suggestions.forEach(text => {
+        const chip = document.createElement('button');
+        chip.textContent = text;
+        chip.style.cssText = `
+          padding: 6px 14px;
+          border: 1.5px solid ${settings.theme_color};
+          border-radius: 20px;
+          background: white;
+          color: ${settings.theme_color};
+          font-size: 12.5px;
+          font-weight: 500;
+          cursor: pointer;
+          font-family: inherit;
+          white-space: nowrap;
+          flex-shrink: 0;
+          transition: background 0.15s, color 0.15s, transform 0.1s;
+        `;
+        chip.onmouseover = () => { chip.style.background = settings.theme_color; chip.style.color = 'white'; chip.style.transform = 'scale(1.04)'; };
+        chip.onmouseout  = () => { chip.style.background = 'white'; chip.style.color = settings.theme_color; chip.style.transform = 'scale(1)'; };
+        chip.onclick = () => {
+          input.value = text;
+          handleSendMessage();
+        };
+        sugBar.appendChild(chip);
+      });
+
+      wrapper.appendChild(sugBar);
+    }
+
     wrapper.appendChild(inputContainer);
 
     setTimeout(() => addMessage('assistant', settings.welcome_message), 0);

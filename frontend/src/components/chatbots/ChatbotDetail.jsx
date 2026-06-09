@@ -82,6 +82,9 @@ function ChatbotDetail() {
   // Session chat dialog
   const [sessionDialog, setSessionDialog] = useState({ open: false, lead: null, messages: [], loading: false });
 
+  // Suggestion chips state
+  const [newSuggestion, setNewSuggestion] = useState('');
+
   useEffect(() => {
     fetchChatbotData();
   }, [id]);
@@ -98,7 +101,10 @@ function ChatbotDetail() {
         api.get(`/chatbots/${id}/lead-capture`),
       ]);
       setChatbot(chatbotRes.data);
-      setSettings(settingsRes.data);
+      setSettings({
+        ...settingsRes.data,
+        suggestions: Array.isArray(settingsRes.data.suggestions) ? settingsRes.data.suggestions : [],
+      });
       setLeadConfig({
         enabled: leadRes.data.enabled || false,
         title: leadRes.data.title || 'Before we begin...',
@@ -271,7 +277,57 @@ function ChatbotDetail() {
                   <option value="medium">Medium</option>
                   <option value="large">Large</option>
                 </TextField>
-                <Button variant="contained" onClick={handleUpdateSettings} sx={{ mt: 2 }} fullWidth>Save Settings</Button>
+                {/* Quick Suggestions */}
+                <Divider sx={{ my: 3 }} />
+                <Typography variant="h6" gutterBottom>Quick Suggestions</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Clickable chips shown in the chat after the welcome message. Users can click them to instantly send that message.
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Add a suggestion"
+                    placeholder="e.g. What are your fees?"
+                    value={newSuggestion}
+                    onChange={e => setNewSuggestion(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && newSuggestion.trim()) {
+                        handleSettingChange('suggestions', [...(settings?.suggestions || []), newSuggestion.trim()]);
+                        setNewSuggestion('');
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                      if (!newSuggestion.trim()) return;
+                      handleSettingChange('suggestions', [...(settings?.suggestions || []), newSuggestion.trim()]);
+                      setNewSuggestion('');
+                    }}
+                    sx={{ whiteSpace: 'nowrap' }}
+                  >
+                    Add
+                  </Button>
+                </Box>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, minHeight: 36 }}>
+                  {(settings?.suggestions || []).map((s, i) => (
+                    <Chip
+                      key={i}
+                      label={s}
+                      onDelete={() => handleSettingChange('suggestions', settings.suggestions.filter((_, idx) => idx !== i))}
+                      color="primary"
+                      variant="outlined"
+                      size="small"
+                    />
+                  ))}
+                  {(settings?.suggestions || []).length === 0 && (
+                    <Typography variant="body2" color="text.disabled" sx={{ fontStyle: 'italic' }}>No suggestions added yet</Typography>
+                  )}
+                </Box>
+
+                <Button variant="contained" onClick={handleUpdateSettings} sx={{ mt: 3 }} fullWidth>Save Settings</Button>
 
                 <Divider sx={{ my: 3 }} />
 

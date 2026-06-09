@@ -186,6 +186,12 @@ func (h *ChatbotHandler) GetSettings(c *gin.Context) {
 		fields = []models.LeadCaptureField{}
 	}
 
+	var suggestions []string
+	json.Unmarshal([]byte(settings.Suggestions), &suggestions)
+	if suggestions == nil {
+		suggestions = []string{}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"id":              settings.ID,
 		"chatbot_id":      settings.ChatbotID,
@@ -196,6 +202,7 @@ func (h *ChatbotHandler) GetSettings(c *gin.Context) {
 		"avatar_url":      settings.AvatarURL,
 		"custom_css":      settings.CustomCSS,
 		"widget_size":     settings.WidgetSize,
+		"suggestions":     suggestions,
 		"lead_capture": gin.H{
 			"enabled":  leadCfg.Enabled,
 			"title":    leadCfg.Title,
@@ -212,16 +219,38 @@ func (h *ChatbotHandler) UpdateSettings(c *gin.Context) {
 		return
 	}
 
-	var settings models.ChatbotSettings
-	if err := c.ShouldBindJSON(&settings); err != nil {
+	var body struct {
+		ThemeColor     string   `json:"theme_color"`
+		Position       string   `json:"position"`
+		WelcomeMessage string   `json:"welcome_message"`
+		AvatarURL      string   `json:"avatar_url"`
+		CustomCSS      string   `json:"custom_css"`
+		WidgetSize     string   `json:"widget_size"`
+		Suggestions    []string `json:"suggestions"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	settings.ChatbotID = id
-
-	err = h.repo.UpdateSettings(&settings)
+	suggestionsJSON, err := json.Marshal(body.Suggestions)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to encode suggestions"})
+		return
+	}
+
+	settings := models.ChatbotSettings{
+		ChatbotID:      id,
+		ThemeColor:     body.ThemeColor,
+		Position:       body.Position,
+		WelcomeMessage: body.WelcomeMessage,
+		AvatarURL:      body.AvatarURL,
+		CustomCSS:      body.CustomCSS,
+		WidgetSize:     body.WidgetSize,
+		Suggestions:    string(suggestionsJSON),
+	}
+
+	if err := h.repo.UpdateSettings(&settings); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update settings"})
 		return
 	}
