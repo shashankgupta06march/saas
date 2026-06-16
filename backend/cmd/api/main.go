@@ -43,14 +43,14 @@ func main() {
 	// qualityRepo := repository.NewKBQualityRepository(db)
 
 	// Initialize services
-	knowledgeService := services.NewKnowledgeService(knowledgeRepo, openaiClient)
-	chatService := services.NewChatService(conversationRepo, knowledgeService, openaiClient)
+	chunkingService := services.NewKBChunkingService(chunkRepo, openaiClient)
+	knowledgeService := services.NewKnowledgeService(knowledgeRepo, openaiClient, chunkingService)
+	chatService := services.NewChatService(conversationRepo, knowledgeService, chunkingService, openaiClient)
 
 	// New advanced KB services
 	folderService := services.NewKBFolderService(folderRepo)
 	tagService := services.NewKBTagService(tagRepo)
 	versionService := services.NewKBVersionService(versionRepo, knowledgeRepo)
-	chunkingService := services.NewKBChunkingService(chunkRepo, openaiClient)
 	// qualityService := services.NewKBQualityService(qualityRepo, knowledgeService, openaiClient)
 	// syncService := services.NewKBSyncService(syncRepo, knowledgeRepo)
 

@@ -235,42 +235,64 @@ func (h *KnowledgeHandler) ScrapeURL(c *gin.Context) {
 		depth = 5
 	}
 
-	// Scrape the website
-	content, err := parser.ScrapeWebsite(req.URL, depth)
+	// Crawl the site — returns one entry per page visited (up to 80 pages).
+	// Each page is one cheap embedding call, so a higher cap buys much more
+	// complete site coverage for negligible extra cost.
+	pages, err := parser.ScrapeWebsite(req.URL, depth, 80)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scrape website: " + err.Error()})
 		return
 	}
 
-	// Limit content size
-	if len(content) > 50000 {
-		content = content[:50000]
+	// Store each page as its own knowledge base entry with its own embedding,
+	// so retrieval can match the specific page instead of one giant blob.
+	var created []models.KnowledgeBase
+	failed := 0
+
+	for _, page := range pages {
+		content := page.Content
+		if len(content) > 50000 {
+			content = content[:50000]
+		}
+
+		title := page.Title
+		if len(pages) == 1 && req.Title != "" && req.Title != req.URL {
+			title = req.Title
+		}
+		if title == "" {
+			title = page.URL
+		}
+
+		kb := &models.KnowledgeBase{
+			OrganizationID: organizationID,
+			ChatbotID:      req.ChatbotID,
+			Title:          title,
+			Content:        content,
+			ContentType:    "webpage",
+			SourceURL:      page.URL,
+		}
+
+		if err := h.service.AddKnowledge(kb); err != nil {
+			failed++
+			continue
+		}
+		created = append(created, *kb)
 	}
 
-	// Use URL as title if not provided
-	title := req.Title
-	if title == "" {
-		title = req.URL
-	}
-
-	// Create knowledge base entry
-	kb := &models.KnowledgeBase{
-		OrganizationID: organizationID,
-		ChatbotID:      req.ChatbotID,
-		Title:          title,
-		Content:        content,
-		ContentType:    "webpage",
-		SourceURL:      req.URL,
-	}
-
-	err = h.service.AddKnowledge(kb)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add knowledge: " + err.Error()})
+	if len(created) == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process any scraped pages"})
 		return
 	}
 
+	message := fmt.Sprintf("Scraped and processed %d page(s)", len(created))
+	if failed > 0 {
+		message += fmt.Sprintf(" (%d failed)", failed)
+	}
+
 	c.JSON(http.StatusCreated, gin.H{
-		"message":   "Website scraped and processed successfully",
-		"knowledge": kb,
+		"message":       message,
+		"pages_scraped": len(created),
+		"pages_failed":  failed,
+		"knowledge":     created,
 	})
 }

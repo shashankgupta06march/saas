@@ -111,13 +111,19 @@ function KnowledgeBase() {
     setLoading(true);
 
     try {
-      await api.post('/knowledge/scrape', {
+      const res = await api.post('/knowledge/scrape', {
         chatbot_id: parseInt(chatbotId),
         url,
         title: title || url,
         depth: parseInt(depth),
       });
-      setSuccess('Website scraped and processed successfully');
+      const count = res.data?.pages_scraped || 1;
+      const failedCount = res.data?.pages_failed || 0;
+      let msg = `Scraped and processed ${count} page${count === 1 ? '' : 's'} successfully`;
+      if (failedCount > 0) {
+        msg += ` (${failedCount} page${failedCount === 1 ? '' : 's'} failed — content too large to process)`;
+      }
+      setSuccess(msg);
       closeDialog();
       fetchKnowledge();
     } catch (err) {

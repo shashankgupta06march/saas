@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"log"
 	"strings"
 
 	"github.com/chatbot-saas/backend/internal/models"
@@ -10,18 +11,29 @@ import (
 )
 
 type KnowledgeService struct {
-	repo         *repository.KnowledgeRepository
-	openaiClient *openai.Client
+	repo            *repository.KnowledgeRepository
+	openaiClient    *openai.Client
+	chunkingService *KBChunkingService
 }
 
-func NewKnowledgeService(repo *repository.KnowledgeRepository, openaiClient *openai.Client) *KnowledgeService {
+func NewKnowledgeService(repo *repository.KnowledgeRepository, openaiClient *openai.Client, chunkingService *KBChunkingService) *KnowledgeService {
 	return &KnowledgeService{
-		repo:         repo,
-		openaiClient: openaiClient,
+		repo:            repo,
+		openaiClient:    openaiClient,
+		chunkingService: chunkingService,
 	}
 }
 
+// maxEmbeddableChars keeps content safely under text-embedding-3-small's
+// 8191-token input limit (~32-35K chars for English text) — content beyond
+// this would make the OpenAI embedding call fail outright.
+const maxEmbeddableChars = 24000
+
 func (s *KnowledgeService) AddKnowledge(kb *models.KnowledgeBase) error {
+	if len(kb.Content) > maxEmbeddableChars {
+		kb.Content = kb.Content[:maxEmbeddableChars]
+	}
+
 	// Generate embedding for the content
 	embedding, err := s.openaiClient.GenerateEmbedding(kb.Content)
 	if err != nil {
@@ -36,7 +48,19 @@ func (s *KnowledgeService) AddKnowledge(kb *models.KnowledgeBase) error {
 
 	kb.EmbeddingVector = embeddingJSON
 
-	return s.repo.Create(kb)
+	if err := s.repo.Create(kb); err != nil {
+		return err
+	}
+
+	// Chunk the content so retrieval can match specific facts within large
+	// pages instead of only ever comparing against one whole-page embedding.
+	// A chunking failure shouldn't fail the whole add — whole-page retrieval
+	// still works as a fallback.
+	if err := s.chunkingService.CreateChunksForKB(kb); err != nil {
+		log.Printf("warning: failed to chunk knowledge base entry %d: %v", kb.ID, err)
+	}
+
+	return nil
 }
 
 type SourceInfo struct {
@@ -101,11 +125,19 @@ func (s *KnowledgeService) GetRelevantContext(chatbotID int64, query string, top
 		topK = len(scored)
 	}
 
+	// Cap each snippet so a handful of large pages (e.g. a multi-page site
+	// crawl) can't blow past the chat model's context window.
+	const maxContextCharsPerEntry = 3000
+
 	var contextParts []string
 	var sources []SourceInfo
 
 	for i := 0; i < topK; i++ {
-		contextParts = append(contextParts, scored[i].kb.Content)
+		content := scored[i].kb.Content
+		if len(content) > maxContextCharsPerEntry {
+			content = content[:maxContextCharsPerEntry]
+		}
+		contextParts = append(contextParts, content)
 
 		// Add source information if available
 		if scored[i].kb.SourceURL != "" {

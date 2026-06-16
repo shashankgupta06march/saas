@@ -1,6 +1,8 @@
 package services
 
 import (
+	"strings"
+
 	"github.com/chatbot-saas/backend/internal/models"
 	"github.com/chatbot-saas/backend/internal/repository"
 	"github.com/chatbot-saas/backend/pkg/openai"
@@ -10,15 +12,39 @@ import (
 type ChatService struct {
 	convRepo         *repository.ConversationRepository
 	knowledgeService *KnowledgeService
+	chunkingService  *KBChunkingService
 	openaiClient     *openai.Client
 }
 
-func NewChatService(convRepo *repository.ConversationRepository, knowledgeService *KnowledgeService, openaiClient *openai.Client) *ChatService {
+func NewChatService(convRepo *repository.ConversationRepository, knowledgeService *KnowledgeService, chunkingService *KBChunkingService, openaiClient *openai.Client) *ChatService {
 	return &ChatService{
 		convRepo:         convRepo,
 		knowledgeService: knowledgeService,
+		chunkingService:  chunkingService,
 		openaiClient:     openaiClient,
 	}
+}
+
+// getRelevantContext prefers chunk-level retrieval (precise matches within
+// large pages) and falls back to whole-page retrieval for chatbots whose
+// knowledge base entries haven't been chunked yet.
+func (s *ChatService) getRelevantContext(chatbotID int64, message string) string {
+	const chunkTopK = 5
+
+	chunks, err := s.chunkingService.GetRelevantChunks(chatbotID, message, chunkTopK)
+	if err == nil && len(chunks) > 0 {
+		var parts []string
+		for _, c := range chunks {
+			parts = append(parts, c.Content)
+		}
+		return strings.Join(parts, "\n\n")
+	}
+
+	context, _, err := s.knowledgeService.GetRelevantContext(chatbotID, message, 3)
+	if err != nil {
+		return ""
+	}
+	return context
 }
 
 func (s *ChatService) HandleMessage(chatbotID int64, sessionID, message string) (string, error) {
@@ -77,10 +103,7 @@ func (s *ChatService) HandleMessage(chatbotID int64, sessionID, message string) 
 	})
 
 	// Get relevant context from knowledge base
-	context, _, err := s.knowledgeService.GetRelevantContext(chatbotID, message, 3)
-	if err != nil {
-		context = ""
-	}
+	context := s.getRelevantContext(chatbotID, message)
 
 	// Generate response
 	response, _, err := s.openaiClient.GenerateChatResponse(chatMessages, context)
