@@ -240,18 +240,22 @@ function ChatbotDetail() {
 
   // ── Widget helpers ──────────────────────────────────────────────────────────
 
-  const getWidgetUrl = () => {
-    const envUrl = import.meta.env.VITE_WIDGET_URL;
-    if (envUrl) return envUrl;
-    const { hostname, protocol } = window.location;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') return 'http://localhost:8081/widget.js';
-    return `${protocol}//chatbot-api.appster.co.in/widget.js`;
-  };
-
   const getApiUrl = () => {
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) return envUrl;
     const { hostname, protocol } = window.location;
     if (hostname === 'localhost' || hostname === '127.0.0.1') return 'http://localhost:8081/api';
     return `${protocol}//chatbot-api.appster.co.in/api`;
+  };
+
+  // Derive the widget URL from the API base so the two can never point at
+  // different hosts (a past production hand-edit set this to the bare admin
+  // origin, which served index.html and broke the preview with
+  // "Unexpected token '<'"). VITE_WIDGET_URL still overrides if needed.
+  const getWidgetUrl = () => {
+    const envUrl = import.meta.env.VITE_WIDGET_URL;
+    if (envUrl) return envUrl;
+    return getApiUrl().replace(/\/api\/?$/, '') + '/widget.js';
   };
 
   const widgetCode = `<script>
