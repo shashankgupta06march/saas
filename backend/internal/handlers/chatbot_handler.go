@@ -199,8 +199,10 @@ func (h *ChatbotHandler) GetSettings(c *gin.Context) {
 		"theme_color":     settings.ThemeColor,
 		"position":        settings.Position,
 		"welcome_message": settings.WelcomeMessage,
-		"avatar_url":      settings.AvatarURL,
-		"custom_css":      settings.CustomCSS,
+		"avatar_url":       settings.AvatarURL,
+		"icon_url":         settings.IconURL,
+		"fallback_message": settings.FallbackMessage,
+		"custom_css":       settings.CustomCSS,
 		"widget_size":     settings.WidgetSize,
 		"suggestions":     suggestions,
 		"lead_capture": gin.H{
@@ -223,8 +225,10 @@ func (h *ChatbotHandler) UpdateSettings(c *gin.Context) {
 		ThemeColor     string   `json:"theme_color"`
 		Position       string   `json:"position"`
 		WelcomeMessage string   `json:"welcome_message"`
-		AvatarURL      string   `json:"avatar_url"`
-		CustomCSS      string   `json:"custom_css"`
+		AvatarURL       string   `json:"avatar_url"`
+		IconURL         string   `json:"icon_url"`
+		FallbackMessage string   `json:"fallback_message"`
+		CustomCSS       string   `json:"custom_css"`
 		WidgetSize     string   `json:"widget_size"`
 		Suggestions    []string `json:"suggestions"`
 	}
@@ -244,8 +248,10 @@ func (h *ChatbotHandler) UpdateSettings(c *gin.Context) {
 		ThemeColor:     body.ThemeColor,
 		Position:       body.Position,
 		WelcomeMessage: body.WelcomeMessage,
-		AvatarURL:      body.AvatarURL,
-		CustomCSS:      body.CustomCSS,
+		AvatarURL:       body.AvatarURL,
+		IconURL:         body.IconURL,
+		FallbackMessage: body.FallbackMessage,
+		CustomCSS:       body.CustomCSS,
 		WidgetSize:     body.WidgetSize,
 		Suggestions:    string(suggestionsJSON),
 	}

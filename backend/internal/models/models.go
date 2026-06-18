@@ -32,6 +32,8 @@ type ChatbotSettings struct {
 	Position       string `json:"position"`
 	WelcomeMessage string `json:"welcome_message"`
 	AvatarURL      string `json:"avatar_url"`
+	IconURL        string `json:"icon_url"`
+	FallbackMessage string `json:"fallback_message"` // Shown when nothing relevant is found in the KB; empty = default behavior
 	CustomCSS      string `json:"custom_css"`
 	WidgetSize     string `json:"widget_size"`
 	Suggestions    string `json:"suggestions"` // JSON array of suggestion strings
@@ -110,6 +112,12 @@ type KBChunk struct {
 	TokenCount      sql.NullInt32  `json:"token_count"`
 	Metadata        sql.NullString `json:"metadata"`
 	CreatedAt       time.Time      `json:"created_at"`
+
+	// SourceContentType is the parent knowledge-base entry's content_type
+	// (e.g. "webpage", "pdf", "text"). It is not stored on the chunk row; it's
+	// populated by retrieval queries so ranking can favour uploaded documents
+	// over scraped web pages. Empty when not loaded.
+	SourceContentType string `json:"source_content_type,omitempty"`
 }
 
 type KBSyncSource struct {

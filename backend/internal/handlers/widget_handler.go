@@ -25,9 +25,11 @@ func (h *WidgetHandler) ServeWidget(c *gin.Context) {
 		return
 	}
 
-	// Set appropriate headers
+	// Set appropriate headers.
 	c.Header("Content-Type", "application/javascript")
-	c.Header("Cache-Control", "public, max-age=3600")
+	// Don't let browsers serve a stale widget after we ship fixes — revalidate
+	// on every load. The file is tiny, so the revalidation cost is negligible.
+	c.Header("Cache-Control", "no-cache, must-revalidate")
 	
 	// Set CORS headers to allow embedding from any domain
 	c.Header("Access-Control-Allow-Origin", "*")

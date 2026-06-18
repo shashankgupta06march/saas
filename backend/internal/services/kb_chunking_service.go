@@ -237,22 +237,30 @@ func (s *KBChunkingService) CreateChunksForKB(kb *models.KnowledgeBase) error {
 	return nil
 }
 
-// GetRelevantChunks finds the most relevant chunks for a query
+// GetRelevantChunks finds the most relevant chunks for a query.
 func (s *KBChunkingService) GetRelevantChunks(chatbotID int64, query string, topK int) ([]models.KBChunk, error) {
+	chunks, _, err := s.GetRelevantChunksScored(chatbotID, query, topK)
+	return chunks, err
+}
+
+// GetRelevantChunksScored is like GetRelevantChunks but also returns the best
+// cosine-similarity score among all chunks. Callers use the score to decide
+// whether the knowledge base actually has anything relevant to the query.
+func (s *KBChunkingService) GetRelevantChunksScored(chatbotID int64, query string, topK int) ([]models.KBChunk, float64, error) {
 	// Generate embedding for the query
 	queryEmbedding, err := s.openaiClient.GenerateEmbedding(query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate query embedding: %w", err)
+		return nil, 0, fmt.Errorf("failed to generate query embedding: %w", err)
 	}
 
 	// Get all chunks for this chatbot
 	allChunks, err := s.chunkRepo.GetAllChunks(chatbotID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get chunks: %w", err)
+		return nil, 0, fmt.Errorf("failed to get chunks: %w", err)
 	}
 
 	if len(allChunks) == 0 {
-		return []models.KBChunk{}, nil
+		return []models.KBChunk{}, 0, nil
 	}
 
 	// Calculate similarity scores
@@ -277,7 +285,7 @@ func (s *KBChunkingService) GetRelevantChunks(chatbotID int64, query string, top
 	}
 
 	if len(scored) == 0 {
-		return []models.KBChunk{}, nil
+		return []models.KBChunk{}, 0, nil
 	}
 
 	// Sort by score (bubble sort for simplicity)
@@ -289,17 +297,56 @@ func (s *KBChunkingService) GetRelevantChunks(chatbotID int64, query string, top
 		}
 	}
 
-	// Return top K
 	if topK > len(scored) {
 		topK = len(scored)
 	}
 
-	var result []models.KBChunk
-	for i := 0; i < topK; i++ {
-		result = append(result, scored[i].chunk)
+	// Reserve a few slots for chunks that come from uploaded documents (PDFs,
+	// DOCX, manually-added text — anything not scraped from the web). Scraped
+	// pages vastly outnumber uploaded docs and their prose often out-scores a
+	// document's tables/lists on a query, which would otherwise keep an
+	// uploaded file from ever appearing in the answer context. Reserving slots
+	// guarantees the uploaded source is consulted on its own topics.
+	//
+	// The relative-relevance guard ensures we only force in a document chunk
+	// when it's actually on-topic (score within docRelevanceRatio of the best
+	// chunk), so unrelated questions don't get polluted with document noise.
+	const docReserveSlots = 2
+	const docRelevanceRatio = 0.6
+
+	isDocChunk := func(c models.KBChunk) bool {
+		return c.SourceContentType != "" && c.SourceContentType != "webpage"
 	}
 
-	return result, nil
+	topScore := scored[0].score
+	used := make(map[int64]bool)
+	var result []models.KBChunk
+
+	docsAdded := 0
+	for _, sc := range scored {
+		if docsAdded >= docReserveSlots || len(result) >= topK {
+			break
+		}
+		if isDocChunk(sc.chunk) && sc.score >= topScore*docRelevanceRatio {
+			result = append(result, sc.chunk)
+			used[sc.chunk.ID] = true
+			docsAdded++
+		}
+	}
+
+	// Fill the remaining slots with the best chunks overall.
+	for _, sc := range scored {
+		if len(result) >= topK {
+			break
+		}
+		if used[sc.chunk.ID] {
+			continue
+		}
+		result = append(result, sc.chunk)
+		used[sc.chunk.ID] = true
+	}
+
+	return result, topScore, nil
 }
 
 // GetChunksForKB retrieves all chunks for a knowledge base entry

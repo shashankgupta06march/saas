@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
+  Avatar,
   Box,
   Paper,
   Typography,
@@ -39,6 +40,8 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
   People as PeopleIcon,
+  CloudUpload as CloudUploadIcon,
+  Chat as ChatIcon,
 } from '@mui/icons-material';
 import api from '../../services/api';
 
@@ -162,6 +165,45 @@ function ChatbotDetail() {
     setTimeout(() => refreshPreview(), 300);
   };
 
+  const [iconUploading, setIconUploading] = useState(false);
+
+  const persistSettings = async (updated) => {
+    setSettings(updated);
+    await api.put(`/chatbots/${id}/settings`, updated);
+    setTimeout(() => refreshPreview(), 300);
+  };
+
+  const handleIconUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+    setError(''); setSuccess('');
+    setIconUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post('/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      await persistSettings({ ...settings, icon_url: res.data.url });
+      setSuccess('Chatbot icon updated');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to upload icon');
+    } finally {
+      setIconUploading(false);
+    }
+  };
+
+  const handleRemoveIcon = async () => {
+    setError(''); setSuccess('');
+    try {
+      await persistSettings({ ...settings, icon_url: '' });
+      setSuccess('Chatbot icon removed');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to remove icon');
+    }
+  };
+
   // ── Lead Capture tab ────────────────────────────────────────────────────────
 
   const handleSaveLeadConfig = async () => {
@@ -272,6 +314,38 @@ function ChatbotDetail() {
                 </TextField>
                 <TextField fullWidth label="Welcome Message" value={settings?.welcome_message || ''} onChange={e => handleSettingChange('welcome_message', e.target.value)} margin="normal" multiline rows={2} helperText="First message users see" />
                 <TextField fullWidth label="Avatar URL" value={settings?.avatar_url || ''} onChange={e => handleSettingChange('avatar_url', e.target.value)} margin="normal" helperText="Optional bot avatar image" />
+
+                {/* Chatbot launcher icon upload */}
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>Chatbot Icon</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {settings?.icon_url ? (
+                      <Avatar src={settings.icon_url} sx={{ width: 52, height: 52, border: '1px solid #e0e0e0' }} />
+                    ) : (
+                      <Avatar sx={{ width: 52, height: 52, bgcolor: settings?.theme_color || '#1976d2' }}>
+                        <ChatIcon fontSize="small" />
+                      </Avatar>
+                    )}
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      startIcon={<CloudUploadIcon />}
+                      disabled={iconUploading}
+                    >
+                      {iconUploading ? 'Uploading…' : (settings?.icon_url ? 'Change Icon' : 'Upload Icon')}
+                      <input hidden type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={handleIconUpload} />
+                    </Button>
+                    {settings?.icon_url && (
+                      <Button color="error" onClick={handleRemoveIcon} disabled={iconUploading}>Remove</Button>
+                    )}
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    Upload a PNG, JPEG, GIF or WebP (max 3 MB). Used for the floating chat button.
+                  </Typography>
+                </Box>
+
+                <TextField fullWidth label="No-Answer Message" value={settings?.fallback_message || ''} onChange={e => handleSettingChange('fallback_message', e.target.value)} margin="normal" multiline rows={2} placeholder="e.g. Sorry, I don't have information on that. Please contact us at info@example.com." helperText="Shown when the chatbot finds nothing relevant in its knowledge base. Leave empty to let the bot answer normally." />
+
                 <TextField fullWidth label="Widget Size" value={settings?.widget_size || 'medium'} onChange={e => handleSettingChange('widget_size', e.target.value)} margin="normal" select SelectProps={{ native: true }}>
                   <option value="small">Small</option>
                   <option value="medium">Medium</option>
@@ -361,7 +435,7 @@ function ChatbotDetail() {
                       <iframe
                         key={previewKey}
                         ref={previewRef}
-                        srcDoc={`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;color:white;}.info{text-align:center;padding:40px;}</style></head><body><div class="info"><h2>🤖 Live Chatbot Preview</h2><p>Your chatbot widget will appear in the <strong>${settings?.position || 'bottom-right'}</strong> corner</p><p style="margin-top:20px;font-size:14px;">👇 Look for the chat icon and click it to test!</p></div><script>(function(){var s=document.createElement('script');s.src='${getWidgetUrl()}';s.setAttribute('data-chatbot-id','${id}');s.setAttribute('data-api-url','${getApiUrl()}');document.body.appendChild(s);})();</script></body></html>`}
+                        srcDoc={`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;color:white;}.info{text-align:center;padding:40px;}</style></head><body><div class="info"><h2>🤖 Live Chatbot Preview</h2><p>Your chatbot widget will appear in the <strong>${settings?.position || 'bottom-right'}</strong> corner</p><p style="margin-top:20px;font-size:14px;">👇 Look for the chat icon and click it to test!</p></div><script>(function(){var s=document.createElement('script');s.src='${getWidgetUrl()}?v=${previewKey}';s.setAttribute('data-chatbot-id','${id}');s.setAttribute('data-api-url','${getApiUrl()}');document.body.appendChild(s);})();</script></body></html>`}
                         style={{ width: '100%', height: '100%', border: 'none' }}
                         title="Chatbot Preview"
                       />

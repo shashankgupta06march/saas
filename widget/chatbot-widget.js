@@ -144,7 +144,19 @@
 
     const button = document.createElement('button');
     button.id = 'chatbot-toggle-button';
-    button.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="white"/></svg>`;
+    const defaultIconSvg = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="white"/></svg>`;
+    if (settings.icon_url) {
+      // Custom uploaded launcher icon (png/jpeg/gif/webp). Fill the circular
+      // button; fall back to the default chat glyph if the image fails to load.
+      const iconImg = document.createElement('img');
+      iconImg.src = settings.icon_url;
+      iconImg.alt = 'Chat';
+      iconImg.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;';
+      iconImg.onerror = () => { button.innerHTML = defaultIconSvg; };
+      button.appendChild(iconImg);
+    } else {
+      button.innerHTML = defaultIconSvg;
+    }
     button.style.cssText = `
       width: 58px;
       height: 58px;
@@ -674,13 +686,33 @@
   function formatMessageContent(content) {
     const esc = (t) => t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+    const linkStyle = 'color:#1976d2;text-decoration:underline;word-break:break-all;';
+    const anchor = (url, label) => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="${linkStyle}">${label}</a>`;
     const inline = (t) => {
       // bold
       t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
       // inline code
       t = t.replace(/`([^`]+)`/g, '<code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:12px;font-family:monospace;">$1</code>');
-      // links
-      t = t.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#1976d2;text-decoration:underline;word-break:break-all;">$1</a>');
+      // Markdown links [text](url) AND bare URLs, handled in one pass so the
+      // URL inside a markdown link isn't re-linkified (which previously dragged
+      // the closing ")" and trailing punctuation into the href and broke it).
+      t = t.replace(
+        /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<]+)/g,
+        (match, mdLabel, mdUrl, bareUrl) => {
+          if (mdUrl) {
+            return anchor(mdUrl, mdLabel);
+          }
+          // Bare URL: keep trailing sentence punctuation OUT of the href.
+          let url = bareUrl;
+          let trail = '';
+          const m = url.match(/[.,;:!?)\]}'"]+$/);
+          if (m) {
+            trail = m[0];
+            url = url.slice(0, url.length - trail.length);
+          }
+          return anchor(url, url) + trail;
+        }
+      );
       return t;
     };
 

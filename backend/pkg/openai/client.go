@@ -48,20 +48,22 @@ func (c *Client) GenerateEmbedding(text string) ([]float64, error) {
 }
 
 func (c *Client) GenerateChatResponse(messages []openai.ChatCompletionMessage, knowledgeContext string) (string, int, error) {
-	// Prepend knowledge base context if available
+	systemPrompt := "You are a helpful assistant."
 	if knowledgeContext != "" {
-		systemMessage := openai.ChatCompletionMessage{
-			Role:    openai.ChatMessageRoleSystem,
-			Content: "You are a helpful assistant. Use the following context to answer questions:\n\n" + knowledgeContext,
-		}
-		messages = append([]openai.ChatCompletionMessage{systemMessage}, messages...)
-	} else {
-		systemMessage := openai.ChatCompletionMessage{
-			Role:    openai.ChatMessageRoleSystem,
-			Content: "You are a helpful assistant.",
-		}
-		messages = append([]openai.ChatCompletionMessage{systemMessage}, messages...)
+		systemPrompt = "You are a helpful assistant. Use the following context to answer questions:\n\n" + knowledgeContext
 	}
+	return c.GenerateChatResponseWithSystem(messages, systemPrompt)
+}
+
+// GenerateChatResponseWithSystem behaves like GenerateChatResponse but lets the
+// caller supply the full system prompt, so callers can add their own
+// instructions (e.g. how to behave when the context can't answer the question).
+func (c *Client) GenerateChatResponseWithSystem(messages []openai.ChatCompletionMessage, systemPrompt string) (string, int, error) {
+	systemMessage := openai.ChatCompletionMessage{
+		Role:    openai.ChatMessageRoleSystem,
+		Content: systemPrompt,
+	}
+	messages = append([]openai.ChatCompletionMessage{systemMessage}, messages...)
 
 	resp, err := c.client.CreateChatCompletion(context.Background(), openai.ChatCompletionRequest{
 		Model:    openai.GPT3Dot5Turbo,

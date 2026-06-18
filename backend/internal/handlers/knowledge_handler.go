@@ -209,6 +209,7 @@ type ScrapeURLRequest struct {
 	URL       string `json:"url" binding:"required"`
 	Title     string `json:"title"`
 	Depth     int    `json:"depth"`
+	MaxPages  int    `json:"max_pages"`
 }
 
 func (h *KnowledgeHandler) ScrapeURL(c *gin.Context) {
@@ -235,21 +236,49 @@ func (h *KnowledgeHandler) ScrapeURL(c *gin.Context) {
 		depth = 5
 	}
 
-	// Crawl the site — returns one entry per page visited (up to 80 pages).
 	// Each page is one cheap embedding call, so a higher cap buys much more
 	// complete site coverage for negligible extra cost.
-	pages, err := parser.ScrapeWebsite(req.URL, depth, 80)
+	maxPages := req.MaxPages
+	if maxPages <= 0 {
+		maxPages = 150
+	}
+	if maxPages > 500 {
+		maxPages = 500
+	}
+
+	// Crawl the site — returns one entry per page visited plus a count of pages
+	// that failed to load even after retries.
+	pages, fetchFailed, err := parser.ScrapeWebsite(req.URL, depth, maxPages)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scrape website: " + err.Error()})
 		return
 	}
 
+	// Skip pages we already have for this chatbot so re-running a crawl tops up
+	// missing pages instead of creating duplicates.
+	existingURLs := map[string]bool{}
+	if existing, err := h.service.GetByChatbot(req.ChatbotID); err == nil {
+		for _, e := range existing {
+			if e.SourceURL != "" {
+				existingURLs[parser.NormalizeURL(e.SourceURL)] = true
+			}
+		}
+	}
+
 	// Store each page as its own knowledge base entry with its own embedding,
 	// so retrieval can match the specific page instead of one giant blob.
 	var created []models.KnowledgeBase
-	failed := 0
+	failed := fetchFailed
+	skipped := 0
 
 	for _, page := range pages {
+		normURL := parser.NormalizeURL(page.URL)
+		if existingURLs[normURL] {
+			skipped++
+			continue
+		}
+		existingURLs[normURL] = true
+
 		content := page.Content
 		if len(content) > 50000 {
 			content = content[:50000]
@@ -279,12 +308,15 @@ func (h *KnowledgeHandler) ScrapeURL(c *gin.Context) {
 		created = append(created, *kb)
 	}
 
-	if len(created) == 0 {
+	if len(created) == 0 && skipped == 0 {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process any scraped pages"})
 		return
 	}
 
 	message := fmt.Sprintf("Scraped and processed %d page(s)", len(created))
+	if skipped > 0 {
+		message += fmt.Sprintf(" (%d already existed)", skipped)
+	}
 	if failed > 0 {
 		message += fmt.Sprintf(" (%d failed)", failed)
 	}
@@ -292,6 +324,7 @@ func (h *KnowledgeHandler) ScrapeURL(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"message":       message,
 		"pages_scraped": len(created),
+		"pages_skipped": skipped,
 		"pages_failed":  failed,
 		"knowledge":     created,
 	})

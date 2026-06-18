@@ -86,7 +86,7 @@ func (r *KBChunkRepository) DeleteByKBID(kbID int64) error {
 }
 
 func (r *KBChunkRepository) GetAllChunks(chatbotID int64) ([]models.KBChunk, error) {
-	query := `SELECT c.id, c.kb_id, c.chunk_index, c.content, c.embedding_vector, c.token_count, c.metadata, c.created_at 
+	query := `SELECT c.id, c.kb_id, c.chunk_index, c.content, c.embedding_vector, c.token_count, c.metadata, c.created_at, kb.content_type
 	          FROM kb_chunks c
 	          INNER JOIN knowledge_base kb ON c.kb_id = kb.id
 	          WHERE kb.chatbot_id = ? AND kb.status = 'active'
@@ -101,12 +101,17 @@ func (r *KBChunkRepository) GetAllChunks(chatbotID int64) ([]models.KBChunk, err
 	var chunks []models.KBChunk
 	for rows.Next() {
 		var chunk models.KBChunk
+		var contentType sql.NullString
 		err := rows.Scan(
 			&chunk.ID, &chunk.KBID, &chunk.ChunkIndex, &chunk.Content,
 			&chunk.EmbeddingVector, &chunk.TokenCount, &chunk.Metadata, &chunk.CreatedAt,
+			&contentType,
 		)
 		if err != nil {
 			return nil, err
+		}
+		if contentType.Valid {
+			chunk.SourceContentType = contentType.String
 		}
 		chunks = append(chunks, chunk)
 	}

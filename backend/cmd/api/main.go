@@ -45,7 +45,7 @@ func main() {
 	// Initialize services
 	chunkingService := services.NewKBChunkingService(chunkRepo, openaiClient)
 	knowledgeService := services.NewKnowledgeService(knowledgeRepo, openaiClient, chunkingService)
-	chatService := services.NewChatService(conversationRepo, knowledgeService, chunkingService, openaiClient)
+	chatService := services.NewChatService(conversationRepo, knowledgeService, chunkingService, chatbotRepo, openaiClient)
 
 	// New advanced KB services
 	folderService := services.NewKBFolderService(folderRepo)
@@ -61,6 +61,7 @@ func main() {
 	chatHandler := handlers.NewChatHandler(chatService)
 	widgetHandler := handlers.NewWidgetHandler("../widget")
 	leadHandler := handlers.NewLeadHandler(leadRepo, chatbotRepo, conversationRepo)
+	uploadHandler := handlers.NewUploadHandler("../uploads")
 
 	// New advanced KB handlers
 	folderHandler := handlers.NewKBFolderHandler(folderService)
@@ -78,6 +79,10 @@ func main() {
 
 	// Widget route (public)
 	router.GET("/widget.js", widgetHandler.ServeWidget)
+
+	// Serve uploaded images (e.g. chatbot launcher icons) publicly so the
+	// widget can load them from any embedding domain.
+	router.Static("/uploads", "../uploads")
 
 	// Public routes
 	api := router.Group("/api")
@@ -202,6 +207,9 @@ func main() {
 			analytics.GET("/conversations/:chatbot_id", chatHandler.GetConversations)
 			analytics.GET("/messages/:conversation_id", chatHandler.GetMessages)
 		}
+
+		// Image upload (chatbot launcher icon, etc.)
+		protected.POST("/upload/image", uploadHandler.UploadImage)
 	}
 
 	// Start server

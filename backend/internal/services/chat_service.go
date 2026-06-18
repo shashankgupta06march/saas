@@ -13,14 +13,16 @@ type ChatService struct {
 	convRepo         *repository.ConversationRepository
 	knowledgeService *KnowledgeService
 	chunkingService  *KBChunkingService
+	chatbotRepo      *repository.ChatbotRepository
 	openaiClient     *openai.Client
 }
 
-func NewChatService(convRepo *repository.ConversationRepository, knowledgeService *KnowledgeService, chunkingService *KBChunkingService, openaiClient *openai.Client) *ChatService {
+func NewChatService(convRepo *repository.ConversationRepository, knowledgeService *KnowledgeService, chunkingService *KBChunkingService, chatbotRepo *repository.ChatbotRepository, openaiClient *openai.Client) *ChatService {
 	return &ChatService{
 		convRepo:         convRepo,
 		knowledgeService: knowledgeService,
 		chunkingService:  chunkingService,
+		chatbotRepo:      chatbotRepo,
 		openaiClient:     openaiClient,
 	}
 }
@@ -45,6 +47,54 @@ func (s *ChatService) getRelevantContext(chatbotID int64, message string) string
 		return ""
 	}
 	return context
+}
+
+// noAnswerToken is what we instruct the model to emit when the retrieved
+// context can't answer the user's question. Embedding similarity alone can't
+// distinguish "tell me about X college" from a different, on-file college, so
+// we let the model itself judge whether the context actually answers the
+// question and map that judgment onto the admin's fallback message.
+const noAnswerToken = "NO_ANSWER"
+
+// guardedSystemPrompt builds a context-only system prompt that asks the model
+// to emit noAnswerToken when the context doesn't cover the question. Used only
+// when the admin has configured a fallback message.
+func guardedSystemPrompt(context string) string {
+	var b strings.Builder
+	b.WriteString("You are a helpful assistant for a specific organization. ")
+	b.WriteString("Answer the user ONLY using the context provided below. ")
+	b.WriteString("Do not use outside or general knowledge to answer factual questions.\n\n")
+	if strings.TrimSpace(context) != "" {
+		b.WriteString("Context:\n")
+		b.WriteString(context)
+		b.WriteString("\n\n")
+	} else {
+		b.WriteString("Context: (none provided)\n\n")
+	}
+	b.WriteString("Rules:\n")
+	b.WriteString("- If the user's message is only a greeting, thanks, or small talk, reply briefly and politely and do NOT output the token below.\n")
+	b.WriteString("- If the user asks a question and the context above does not clearly contain the information needed to answer it, reply with exactly this and nothing else: " + noAnswerToken + "\n")
+	b.WriteString("- Never invent facts that are not present in the context.")
+	return b.String()
+}
+
+// isNoAnswerResponse reports whether the model signalled it couldn't answer
+// from the context.
+func isNoAnswerResponse(resp string) bool {
+	return strings.Contains(strings.ToUpper(strings.TrimSpace(resp)), noAnswerToken)
+}
+
+// fallbackMessage returns the admin-configured "nothing found" message for the
+// chatbot, or an empty string if none is set.
+func (s *ChatService) fallbackMessage(chatbotID int64) string {
+	if s.chatbotRepo == nil {
+		return ""
+	}
+	settings, err := s.chatbotRepo.GetSettings(chatbotID)
+	if err != nil || settings == nil {
+		return ""
+	}
+	return strings.TrimSpace(settings.FallbackMessage)
 }
 
 func (s *ChatService) HandleMessage(chatbotID int64, sessionID, message string) (string, error) {
@@ -105,10 +155,28 @@ func (s *ChatService) HandleMessage(chatbotID int64, sessionID, message string) 
 	// Get relevant context from knowledge base
 	context := s.getRelevantContext(chatbotID, message)
 
-	// Generate response
-	response, _, err := s.openaiClient.GenerateChatResponse(chatMessages, context)
-	if err != nil {
-		return "", err
+	// When the admin has configured a fallback message, answer strictly from
+	// the knowledge base context and let the model signal (via noAnswerToken)
+	// when the context can't answer the question — then show the fallback.
+	// Greetings/small talk still get a normal reply. When no fallback is
+	// configured we keep the original behavior.
+	var response string
+	if fallback := s.fallbackMessage(chatbotID); fallback != "" {
+		resp, _, err := s.openaiClient.GenerateChatResponseWithSystem(chatMessages, guardedSystemPrompt(context))
+		if err != nil {
+			return "", err
+		}
+		if isNoAnswerResponse(resp) {
+			response = fallback
+		} else {
+			response = resp
+		}
+	} else {
+		resp, _, err := s.openaiClient.GenerateChatResponse(chatMessages, context)
+		if err != nil {
+			return "", err
+		}
+		response = resp
 	}
 
 	// Save assistant message
